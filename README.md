@@ -5,7 +5,7 @@ I wrote this classic solitaire game (*patience*) for fun using a card engine I c
 
 Of the variations of solitary card games, Patience (this one) is admittedly probably my least favorite. Probably because I lose so often.
 
-![Screenshot](https://github.com/softdorothy/ParlourSolitaire/blob/main/Screenshots/Screenshot1.png)
+![Screenshot](Screenshots/Screenshot1.png)
 
 ## The Look
 
