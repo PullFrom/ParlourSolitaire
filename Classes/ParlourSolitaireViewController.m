@@ -1501,16 +1501,20 @@ done:
 
 - (void) openLabSolitaireInAppStore: (id) sender
 {
-	[[UIApplication sharedApplication] openURL: 
-			[NSURL URLWithString: @"itms-apps://itunes.apple.com/app/lab-solitaire/id457535509?mt=8"]];
+	[[UIApplication sharedApplication]
+			openURL: [NSURL URLWithString: @"itms-apps://itunes.apple.com/app/lab-solitaire/id457535509?mt=8"]
+			options: @{}
+			completionHandler: nil];
 }
 
 // ------------------------------------------------------------------------------------------------ openGliderInAppStore
 
 - (void) openGliderInAppStore: (id) sender
 {
-	[[UIApplication sharedApplication] openURL: 
-			[NSURL URLWithString: @"itms-apps://itunes.apple.com/app/glider-classic/id463484447?mt=8"]];
+	[[UIApplication sharedApplication]
+			openURL: [NSURL URLWithString: @"itms-apps://itunes.apple.com/app/glider-classic/id463484447?mt=8"]
+			options: @{}
+			completionHandler: nil];
 }
 
 // ---------------------------------------------------------------------------------------------- setNumberOfCardsToDeal
