@@ -774,7 +774,7 @@ done:
 		}
 	}
 	
-	count = deck.numberOfCards;
+	count = (int) deck.numberOfCards;
 	for (i = 0; i < count; i++)
 	{
 		CECard	*topCard;
@@ -1026,14 +1026,14 @@ done:
 			}
 			
 			[_localPlayer retrieveLocalScore: &played forCategory: _gamesPlayedCategory];
-			[allPlayed appendString: [NSString stringWithFormat: @"%d", played]];
+			[allPlayed appendString: [NSString stringWithFormat: @"%ld", (long) played]];
 			count = count + 1;
 		}
 	}
 	else
 	{
 		[_localPlayer retrieveLocalScore: &played forCategory: _gamesPlayedCategory];
-		[allPlayed appendString: [NSString stringWithFormat: @"%d", played]];
+		[allPlayed appendString: [NSString stringWithFormat: @"%ld", (long) played]];
 		count = count + 1;
 	}
 	
@@ -1066,14 +1066,14 @@ done:
 			}
 			
 			[_localPlayer retrieveLocalScore: &won forCategory: _gamesWonCategory];
-			[allWon appendString: [NSString stringWithFormat: @"%d", won]];
+			[allWon appendString: [NSString stringWithFormat: @"%ld", (long) won]];
 			count = count + 1;
 		}
 	}
 	else
 	{
 		[_localPlayer retrieveLocalScore: &won forCategory: _gamesWonCategory];
-		[allWon appendString: [NSString stringWithFormat: @"%d", won]];
+		[allWon appendString: [NSString stringWithFormat: @"%ld", (long) won]];
 		count = count + 1;
 	}
 	
@@ -1098,13 +1098,13 @@ done:
 			
 			if (gamesPlayed == 0)
 			{
-				[allPercent appendString: [NSString stringWithString: @"-"]];
-				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];				
+				[allPercent appendString: @"-"];
+				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];
 			}
 			else
 			{
-				[allPercent appendString: [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed]];
-				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];				
+				[allPercent appendString: [NSString stringWithFormat: @"%ld%%", (long) ((gamesWon * 100) / gamesPlayed)]];
+				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];
 			}
 			
 			count = count + 1;
@@ -1122,7 +1122,7 @@ done:
 			if (played == 0)
 				[allPercent appendString: @"-"];
 			else
-				[allPercent appendString: [NSString stringWithFormat: @"%d%%", (won * 100) / played]];
+				[allPercent appendString: [NSString stringWithFormat: @"%ld%%", (long) ((won * 100) / played)]];
 			count = count + 1;
 		}
 	}
@@ -1131,7 +1131,7 @@ done:
 		if (played == 0)
 			[allPercent appendString: @"-"];
 		else
-			[allPercent appendString: [NSString stringWithFormat: @"%d%%", (won * 100) / played]];
+			[allPercent appendString: [NSString stringWithFormat: @"%ld%%", (long) ((won * 100) / played)]];
 		count = count + 1;
 	}
 	
@@ -1384,13 +1384,13 @@ done:
 	
 	// Get number of games played and won.
 	[_localPlayer retrieveLocalScore: &gamesPlayed forCategory: _gamesPlayedCategory];
-	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%d", gamesPlayed];
-	
+	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesPlayed];
+
 	[_localPlayer retrieveLocalScore: &gamesWon forCategory: _gamesWonCategory];
-	_gamesWonLabel.text = [NSString stringWithFormat: @"%d", gamesWon];
-	
+	_gamesWonLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesWon];
+
 	if (gamesPlayed != 0)
-		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed];
+		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%ld%%", (long) ((gamesWon * 100) / gamesPlayed)];
 	else
 		_gamesWonPercentageLabel.text = @"-";
 }
@@ -1424,12 +1424,12 @@ done:
 		gamesWon = [number integerValue];
 	
 	// Reflect game statistics.
-	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%d", gamesPlayed];
-	_gamesWonLabel.text = [NSString stringWithFormat: @"%d", gamesWon];
+	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesPlayed];
+	_gamesWonLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesWon];
 	if (gamesPlayed == 0)
 		_gamesWonPercentageLabel.text = @"-";
 	else
-		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed];
+		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%ld%%", (long) ((gamesWon * 100) / gamesPlayed)];
 	
 	// Crossfade to the settings view.
 	[UIView animateWithDuration: 0.2 animations: ^{
@@ -2211,7 +2211,7 @@ skipAudio:
 	NSUInteger	cardIndex;
 	NSUInteger	cardCount;
 	NSUInteger	numberOfCardsDragging;
-	int			i;
+	NSUInteger	i;
 	CECard		*cardTesting;
 	BOOL		allowDrag = NO;
 	
@@ -2700,13 +2700,13 @@ done:
 				
 				leaderboardValue = [[leaderboard objectAtIndex: index] integerValue];
 				if (localScore > leaderboardValue)
-					[leaderboard replaceObjectAtIndex: index withObject: [NSString stringWithFormat: @"%d", localScore]];
+					[leaderboard replaceObjectAtIndex: index withObject: [NSString stringWithFormat: @"%ld", (long) localScore]];
 				else if (leaderboardValue > localScore)
 					[_localPlayer postLocalScore: leaderboardValue forCategory: category];
 			}
 			else
 			{
-				[leaderboard addObject: [NSString stringWithFormat: @"%d", localScore]];
+				[leaderboard addObject: [NSString stringWithFormat: @"%ld", (long) localScore]];
 			}
 			
 			playerIndex = index;

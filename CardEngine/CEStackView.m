@@ -488,7 +488,7 @@ bail:
 		dictionary = [[NSMutableDictionary alloc] initWithCapacity: 3];
 		
 		// Add animation type key to dictionary.
-		[dictionary setObject: [NSString stringWithString: @"moveCardFromPointToPoint"] forKey: @"type"];
+		[dictionary setObject: @"moveCardFromPointToPoint" forKey: @"type"];
 		
 		// Add card, source and destination stack and faceup-edness to animation dictionary.
 		[dictionary setObject: card forKey: @"card"];
@@ -584,7 +584,7 @@ bail:
 		dictionary = [[NSMutableDictionary alloc] initWithCapacity: 3];
 		
 		// Add animation type key to dictionary.
-		[dictionary setObject: [NSString stringWithString: @"flipCard"] forKey: @"type"];
+		[dictionary setObject: @"flipCard" forKey: @"type"];
 		
 		// Add card, duration, face-upedness to animation dictionary.
 		[dictionary setObject: card forKey: @"card"];
@@ -1562,7 +1562,7 @@ bail:
 	{
 		gesture = kDragGestureMoving;
 	}
-	else if (abs(dragDelta.x) > (abs(dragDelta.y) + 2.0))
+	else if (fabs(dragDelta.x) > (fabs(dragDelta.y) + 2.0))
 	{
 		gesture = kDragGestureRevealing;
 	}
@@ -2156,7 +2156,7 @@ bail:
 	if (!_orderly)
 		cardView.transform = cardView.card.transform;
 	if (_displaysCount)
-		[cardView setLabel: [NSString stringWithFormat: @"%d", [_stack numberOfCards]]];
+		[cardView setLabel: [NSString stringWithFormat: @"%lu", (unsigned long) [_stack numberOfCards]]];
 	else
 		[cardView setLabel: nil];
 	[_cardViews addObject: cardView];

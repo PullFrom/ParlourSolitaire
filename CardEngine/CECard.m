@@ -83,15 +83,15 @@ bail:
 + (NSString *) stringForRank: (CERank) rank
 {
 	if (rank == kCERankAce)
-		return [NSString stringWithString: @"A"];
+		return @"A";
 	else if ((rank >= kCERankTwo) && (rank <= kCERankTen))
 		return [NSString stringWithFormat: @"%d", rank];
 	else if (rank == kCERankJack)
-		return [NSString stringWithString: @"J"];
+		return @"J";
 	else if (rank == kCERankQueen)
-		return [NSString stringWithString: @"Q"];
+		return @"Q";
 	else if (rank == kCERankKing)
-		return [NSString stringWithString: @"K"];
+		return @"K";
 	else
 		return nil;
 }
@@ -101,15 +101,15 @@ bail:
 + (NSString *) longStringForRank: (CERank) rank
 {
 	if (rank == kCERankAce)
-		return [NSString stringWithString: @"Ace"];
+		return @"Ace";
 	else if ((rank >= kCERankTwo) && (rank <= kCERankTen))
 		return [NSString stringWithFormat: @"%d", rank];
 	else if (rank == kCERankJack)
-		return [NSString stringWithString: @"Jack"];
+		return @"Jack";
 	else if (rank == kCERankQueen)
-		return [NSString stringWithString: @"Queen"];
+		return @"Queen";
 	else if (rank == kCERankKing)
-		return [NSString stringWithString: @"King"];
+		return @"King";
 	else
 		return nil;
 }
@@ -135,13 +135,13 @@ bail:
 + (NSString *) asciiStringForSuit: (CESuit) suit
 {
 	if (suit == kCESuitDiamonds)
-		return [NSString stringWithString: @"D"];
+		return @"D";
 	else if (suit == kCESuitClubs)
-		return [NSString stringWithString: @"C"];
+		return @"C";
 	else if (suit == kCESuitHearts)
-		return [NSString stringWithString: @"H"];
+		return @"H";
 	else if (suit == kCESuitSpades)
-		return [NSString stringWithString: @"S"];
+		return @"S";
 	else
 		return nil;
 }
@@ -151,13 +151,13 @@ bail:
 + (NSString *) longAsciiStringForSuit: (CESuit) suit
 {
 	if (suit == kCESuitDiamonds)
-		return [NSString stringWithString: @"Diamonds"];
+		return @"Diamonds";
 	else if (suit == kCESuitClubs)
-		return [NSString stringWithString: @"Clubs"];
+		return @"Clubs";
 	else if (suit == kCESuitHearts)
-		return [NSString stringWithString: @"Hearts"];
+		return @"Hearts";
 	else if (suit == kCESuitSpades)
-		return [NSString stringWithString: @"Spades"];
+		return @"Spades";
 	else
 		return nil;
 }
@@ -361,7 +361,7 @@ static void AddRoundedRectToPath (CGContextRef context, CGRect rect, CGFloat ova
 static void RandomizeSeed (void)
 {
 	// Randomize random number seed.
-	srand (time (nil));
+	srand ((unsigned int) time (NULL));
 	_randomizedSeed = true;
 }
 

@@ -34,7 +34,7 @@ static int32_t gWinRandState = 0;
 
 + (id) deckOfCards
 {
-	NSUInteger	i;
+	int			i;
 	id			deck;
 
 	deck = [[CEStack alloc] init];
@@ -317,7 +317,7 @@ bail:
 
 - (void) addDeckWithRandomTransform: (BOOL) random
 {
-	NSUInteger	i;
+	int			i;
 
 	// Add deck of cards.
 	for (i = 1; i <= 52; i++)
@@ -557,7 +557,7 @@ bail:
 	
 	// Seed the psuedo-random number generator.
 	_seedUsed = seed;
-	srand (seed);
+	srand ((unsigned int) seed);
 	
 	// Swap each card with a random card.
 	count = [_cards count];
@@ -585,10 +585,10 @@ bail:
 + (void) debugRandomFunction: (NSUInteger) seed
 {
 	int			i;
-	
+
 	// Random seed.
-	winSRand (seed);
-	printf ("Random Number Seed = %d\n", seed);
+	winSRand ((int32_t) seed);
+	printf ("Random Number Seed = %lu\n", (unsigned long) seed);
 	for (i = 0; i < 52; i++)
 		printf ("Random Number = %d\n", winRand () % 52);
 }
@@ -612,8 +612,8 @@ bail:
 	__Require (count == 52, bail);
 	
 	// Random seed.
-	winSRand (seed);
-	
+	winSRand ((int32_t) seed);
+
 	// Card source.
 	tempDeck = [CEStack deckOfCards];
 	
