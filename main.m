@@ -5,12 +5,13 @@
 
 
 #import <UIKit/UIKit.h>
+#import "ParlourSolitaireAppDelegate.h"
 
 
 int main (int argc, char *argv[])
 {
 	@autoreleasepool
 	{
-		return UIApplicationMain (argc, argv, nil, nil);
+		return UIApplicationMain (argc, argv, nil, NSStringFromClass ([ParlourSolitaireAppDelegate class]));
 	}
 }
