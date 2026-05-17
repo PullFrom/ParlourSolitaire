@@ -8,7 +8,6 @@
 
 @interface LocalPlayer (LocalPlayer_priv)
 
-- (BOOL) gameCenterAPIAvailable;
 - (void) authenticateLocalPlayer;
 
 @end

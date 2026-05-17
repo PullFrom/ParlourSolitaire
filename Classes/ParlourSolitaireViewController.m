@@ -981,8 +981,8 @@ done:
 				[allNames appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];
 				count = count + 1;
 			}
-			if (_localPlayer.alias)
-				[allNames appendString: _localPlayer.alias];
+			if (_localPlayer.displayName)
+				[allNames appendString: _localPlayer.displayName];
 			else
 				[allNames appendString: @"You"];
 			count = count + 1;
@@ -990,8 +990,8 @@ done:
 	}
 	else
 	{
-		if (_localPlayer.alias)
-			[allNames appendString: _localPlayer.alias];
+		if (_localPlayer.displayName)
+			[allNames appendString: _localPlayer.displayName];
 		else
 			[allNames appendString: @"You"];
 		count = count + 1;
@@ -1195,17 +1195,9 @@ done:
 	_wasAutoPutawayMode = _autoPutawayMode;
 	_warnedAboutCardsToDeal = NO;
 	
-	// Refresh the global scores.
-	if ((_localPlayer.usingGameCenter) && (_localPlayer.authenticated))
-	{
-		[_localPlayer retrieveLeaderboardScores: kMaxLeaderboardScores forCategory: _gamesWonCategory 
-				friendsOnly: _leaderboardFriendsOnly];
-	}
-	else
-	{
-		// Update the UI.
-		[self updateGlobalScoresInterface];
-	}
+	// Refresh the global scores. Leaderboard fetching uses deprecated GameKit APIs
+	// and is disabled pending the new GKLeaderboard.loadEntriesForPlayers: integration.
+	[self updateGlobalScoresInterface];
 	
 	// Get main bounds and orientation.
 	mainBounds = self.view.bounds;
@@ -1691,8 +1683,6 @@ done:
 	
 	// Update UI.
 	[self updateSettingsInterface];
-	[_localPlayer retrieveLeaderboardScores: kMaxLeaderboardScores forCategory: _gamesWonCategory 
-			friendsOnly: _leaderboardFriendsOnly];
 }
 
 // ---------------------------------------------------------------------------------------------------- openGameOverView
@@ -2634,12 +2624,8 @@ done:
 
 - (void) localPlayerAuthenticated: (LocalPlayer *) player
 {
-	[_localPlayer retrieveLeaderboardScores: kMaxLeaderboardScores forCategory: _gamesWonCategory 
-			friendsOnly: _leaderboardFriendsOnly];
-	
-	// Fetch player's leaderboard score.
-	[_localPlayer retrieveLeaderboardScoreForLocalPlayerForCategory: _gamesPlayedCategory];
-	[_localPlayer retrieveLeaderboardScoreForLocalPlayerForCategory: _gamesWonCategory];
+	// Leaderboard fetching is disabled pending the new GKLeaderboard.loadEntriesForPlayers:
+	// integration. Local stats are still kept in NSUserDefaults.
 }
 
 // --------------------------------------------------------------------------- localPlayer:failedAuthenticationWithError
@@ -2719,89 +2705,6 @@ done:
 	return playerIndex;
 }
 
-// -------------------------------------------------------- localPlayer:retrievedLeaderboardScores:playerIDs:forCategory
-
-- (void) localPlayer: (LocalPlayer *) player retrievedLeaderboardScores: (NSArray *) scores 
-		playerIDs: (NSArray *) players forCategory: (NSString *) category
-{
-	if ([category isEqualToString: _gamesWonCategory])
-	{
-		// Copy the playerID data.
-		[self copyPlayerIDs: players toOurArray: _leaderboardPlayerIDs];
-		
-		// Copy the leaderboard data.
-		[self copyLeaderboardScores: scores toOurArray: _leaderboardGamesWon];
-		
-		// If our local score is greater than the leaderboard score, substitute our local score in the games-won array.
-		_playerLeaderboardIndex = [self mergeLocalPlayerScoreWithLeaderboardScores: _leaderboardGamesWon forCategory: category];
-		
-		// Fetch the number of games won for the leaderboard players.
-		[_localPlayer retrieveLeaderboardScoresForPlayerIDs: _leaderboardPlayerIDs forCategory: _gamesPlayedCategory];
-	}
-	else if ([category isEqualToString: _gamesPlayedCategory])
-	{
-		// Copy the leaderboard data.
-		[self copyLeaderboardScores: scores toOurArray: _leaderboardGamesPlayed];
-		
-		// If our local score is greater than the leaderboard score, substitute our local score in the games-played array.
-		if (_playerLeaderboardIndex != NSNotFound)
-			[self mergeLocalPlayerScoreWithLeaderboardScores: _leaderboardGamesPlayed forCategory: category];
-		
-		// Fetch the names for the player ID's.
-		if ((_leaderboardPlayerIDs) && ([_leaderboardPlayerIDs count] > 0))
-		{
-			[_localPlayer retrieveAliasesForPlayerIDs: _leaderboardPlayerIDs];
-		}
-		else
-		{
-			_leaderboardAliases = nil;
-			[self updateGlobalScoresInterface];
-		}
-	}
-}
-
-// ----------------------------------------------------------------- retrievedLeaderboardScoreForLocalPlayer:forCategory
-
-- (void) localPlayer: (LocalPlayer *) player retrievedLeaderboardScoreForLocalPlayer: (int64_t) score forCategory: (NSString *) category
-{
-	if ([category isEqualToString: _gamesWonCategory])
-	{
-		NSInteger	gamesWon;
-		
-		[_localPlayer retrieveLocalScore: &gamesWon forCategory: _gamesWonCategory];
-		if (score > gamesWon)
-			[_localPlayer postLocalScore: score forCategory: _gamesWonCategory];
-	}
-	else if ([category isEqualToString: _gamesPlayedCategory])
-	{
-		NSInteger	gamesPlayed;
-		
-		[_localPlayer retrieveLocalScore: &gamesPlayed forCategory: _gamesPlayedCategory];
-		if (score > gamesPlayed)
-			[_localPlayer postLocalScore: score forCategory: _gamesPlayedCategory];
-	}
-}
-
-// ---------------------------------------------------------------------------- localPlayer:retrievedAliasesForPlayerIDs
-
-- (void) localPlayer: (LocalPlayer *) player retrievedAliasesForPlayerIDs: (NSArray *) aliases
-{
-	// Toss previous alias array.
-	_leaderboardAliases = nil;
-	if (aliases)
-		_leaderboardAliases = [aliases copy];
-	
-	// Update the UI.
-	[self updateGlobalScoresInterface];
-}
-
-// -------------------------------------------------------------------- localPlayer:failedRetrieveScoreForCategory:error
-
-- (void) localPlayer: (LocalPlayer *) player failedRetrieveScoreForCategory: (NSString *) category error: (NSError *) error
-{
-	printf ("localPlayer:failedRetrieveScoreForCategory:error: %s\n", [[error description] cStringUsingEncoding: NSUTF8StringEncoding]);
-}
-
 // ------------------------------------------------------------------------ localPlayer:failedPostScoreForCategory:error
 
 - (void) localPlayer: (LocalPlayer *) player failedPostScoreForCategory: (NSString *) category error: (NSError *) error
@@ -2809,11 +2712,11 @@ done:
 	printf ("localPlayer:failedPostScoreForCategory:error: %s\n", [[error description] cStringUsingEncoding: NSUTF8StringEncoding]);
 }
 
-// ----------------------------------------------------------------------- localPlayer:failedRetrieveAliasesForPlayerIDs
+// -------------------------------------------- localPlayer:needsToPresentAuthenticationViewController:
 
-- (void) localPlayer: (LocalPlayer *) player failedRetrieveAliasesForPlayerIDs: (NSError *) error
+- (void) localPlayer: (LocalPlayer *) player needsToPresentAuthenticationViewController: (UIViewController *) viewController
 {
-	printf ("localPlayer:failedRetrieveAliasesForPlayerIDs: %s\n", [[error description] cStringUsingEncoding: NSUTF8StringEncoding]);
+	[self presentViewController: viewController animated: YES completion: nil];
 }
 
 @end
