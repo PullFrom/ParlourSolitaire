@@ -72,9 +72,6 @@
 
 #define kHighlighterVOffset				448
 
-#define kResetTableAlertTag				1
-#define kUndoAllAlertTag				2
-#define kCardsToDealAlertTag			3
 
 #define kMaxLeaderboardScores			10
 
@@ -816,15 +813,27 @@ done:
 	}
 	else
 	{
-		UIAlertView	*alert;
-		
 		// A game is in progress, allow the user to cancel the new game.
-		alert = [[UIAlertView alloc] initWithTitle: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil) 
-				message: NSLocalizedStringFromTable (@"If you start a new game this game will count as a loss.", @"Localizable", nil) 
-				delegate: self cancelButtonTitle: NSLocalizedStringFromTable (@"Cancel", @"Localizable", nil) 
-				otherButtonTitles: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil), nil];
-		alert.tag = kResetTableAlertTag;
-		[alert show];
+		UIAlertController *alert = [UIAlertController
+				alertControllerWithTitle: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil)
+				message: NSLocalizedStringFromTable (@"If you start a new game this game will count as a loss.", @"Localizable", nil)
+				preferredStyle: UIAlertControllerStyleAlert];
+
+		[alert addAction: [UIAlertAction
+				actionWithTitle: NSLocalizedStringFromTable (@"Cancel", @"Localizable", nil)
+				style: UIAlertActionStyleCancel
+				handler: nil]];
+
+		[alert addAction: [UIAlertAction
+				actionWithTitle: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil)
+				style: UIAlertActionStyleDestructive
+				handler: ^(UIAlertAction *action) {
+					if (self->_playSounds)
+						[self->_shufflePlayer play];
+					[self resetTable: YES];
+				}]];
+
+		[self presentViewController: alert animated: YES completion: nil];
 	}
 }
 
@@ -876,18 +885,33 @@ done:
 {
 	if (([[CETableView sharedCardUndoManager] canUndo]) && ([self seedUsedLast] != NSNotFound))
 	{
-		UIAlertView	*alert;
-		
 		if (_playSounds)
 			[_clickOpenSoundPlayer play];
-		
+
 		_undoAllAlertOpen = YES;
-		
+
 		// Allow the player to decide if they want to Undo to the beginning of the game.
-		alert = [[UIAlertView alloc] initWithTitle: UNDO_TITLE message: UNDO_MESSAGE delegate: self 
-				cancelButtonTitle: UNDO_CANCEL_BUTTON otherButtonTitles: UNDO_ALL_BUTTON, nil];
-		alert.tag = kUndoAllAlertTag;
-		[alert show];
+		UIAlertController *alert = [UIAlertController
+				alertControllerWithTitle: UNDO_TITLE
+				message: UNDO_MESSAGE
+				preferredStyle: UIAlertControllerStyleAlert];
+
+		[alert addAction: [UIAlertAction actionWithTitle: UNDO_CANCEL_BUTTON
+				style: UIAlertActionStyleCancel
+				handler: ^(UIAlertAction *action) {
+					self->_undoAllAlertOpen = NO;
+				}]];
+
+		[alert addAction: [UIAlertAction actionWithTitle: UNDO_ALL_BUTTON
+				style: UIAlertActionStyleDestructive
+				handler: ^(UIAlertAction *action) {
+					self->_undoAllAlertOpen = NO;
+					if (self->_playSounds)
+						[self->_shufflePlayer play];
+					[self resetTable: NO];
+				}]];
+
+		[self presentViewController: alert animated: YES completion: nil];
 	}
 }
 
@@ -1508,17 +1532,19 @@ done:
 	// Put up alert telling them that changes will not take effect immediately.
 	if ((_cardsToDealDesired != _cardsToDeal) && (_warnedAboutCardsToDeal == NO))
 	{
-		UIAlertView	*alert;
-		
 		_warnedAboutCardsToDeal = YES;
-		
+
 		// A game is in progress, we will not change the number of cards to deal until the next game.
-		alert = [[UIAlertView alloc] initWithTitle: NSLocalizedStringFromTable (@"Cards To Deal", @"Localizable", nil) 
-				message: NSLocalizedStringFromTable (@"The number of cards to deal will not take effect until the next game.", @"Localizable", nil) 
-				delegate: self cancelButtonTitle: nil 
-				otherButtonTitles: NSLocalizedStringFromTable (@"OK", @"Localizable", nil), nil];
-		alert.tag = kCardsToDealAlertTag;
-		[alert show];
+		UIAlertController *alert = [UIAlertController
+				alertControllerWithTitle: NSLocalizedStringFromTable (@"Cards To Deal", @"Localizable", nil)
+				message: NSLocalizedStringFromTable (@"The number of cards to deal will not take effect until the next game.", @"Localizable", nil)
+				preferredStyle: UIAlertControllerStyleAlert];
+
+		[alert addAction: [UIAlertAction actionWithTitle: NSLocalizedStringFromTable (@"OK", @"Localizable", nil)
+				style: UIAlertActionStyleDefault
+				handler: nil]];
+
+		[self presentViewController: alert animated: YES completion: nil];
 	}
 }
 
@@ -2187,35 +2213,6 @@ skipAudio:
 	_undoHeldTimer = nil;
 }
 
-
-#pragma mark ------ alert view delegate methods
-//--------------------------------------------------------------------------------------- alertView:clickedButtonAtIndex
-
-- (void) alertView: (UIAlertView *) alertView clickedButtonAtIndex: (NSInteger) buttonIndex
-{
-	if (alertView.tag == kResetTableAlertTag)
-	{
-		if (buttonIndex == 1)
-		{
-			if (_playSounds)
-				[_shufflePlayer play];
-			
-			[self resetTable: YES];
-		}
-	}
-	else if (alertView.tag == kUndoAllAlertTag)
-	{
-		_undoAllAlertOpen = NO;
-		
-		if (buttonIndex == 1)		// Undo all.
-		{
-			if (_playSounds)
-				[_shufflePlayer play];
-			
-			[self resetTable: NO];
-		}
-	}
-}
 
 #pragma mark ------ card dealer delegate methods
 // --------------------------------------------------------------------------------------------- cardDealerCompletedDeal
