@@ -1233,13 +1233,12 @@ done:
 	_darkView.userInteractionEnabled = YES;
 
 	// Animate-in the view sliding in while the dark view becomes darker.
-	[UIView beginAnimations: @"SlideInInfoView" context: nil];
-	[UIView setAnimationDuration: 0.5];
-	_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
 	frame = _infoView.frame;
 	frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
-	_infoView.frame = frame;
-	[UIView commitAnimations];
+	[UIView animateWithDuration: 0.5 animations: ^{
+		self->_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
+		self->_infoView.frame = frame;
+	} completion: nil];
 }
 
 // ----------------------------------------------------------------------------------------------------------- aboutInfo
@@ -1248,18 +1247,20 @@ done:
 {
 	if (_playSounds)
 		[_clickOpenSoundPlayer play];
-	
+
 	// Switch to display the "about view".
 	_aboutView.alpha = 0.0;
 	[_infoView addSubview: _aboutView];
-	
-	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _aboutView];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_aboutView.alpha = 1.0;
-	_currentInfoView.alpha = 0.0;
-	[UIView commitAnimations];
+
+	// Crossfade to the about view.
+	[UIView animateWithDuration: 0.2 animations: ^{
+		self->_aboutView.alpha = 1.0;
+		self->_currentInfoView.alpha = 0.0;
+	} completion: ^(BOOL finished) {
+		[self->_currentInfoView removeFromSuperview];
+		self->_currentInfoView = self->_aboutView;
+		[self->_infoView bringSubviewToFront: self->_currentInfoView];
+	}];
 }
 
 // --------------------------------------------------------------------------------------------- updateSettingsInterface
@@ -1430,13 +1431,15 @@ done:
 	else
 		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed];
 	
-	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _settingsView];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_settingsView.alpha = 1.0;
-	_currentInfoView.alpha = 0.0;
-	[UIView commitAnimations];
+	// Crossfade to the settings view.
+	[UIView animateWithDuration: 0.2 animations: ^{
+		self->_settingsView.alpha = 1.0;
+		self->_currentInfoView.alpha = 0.0;
+	} completion: ^(BOOL finished) {
+		[self->_currentInfoView removeFromSuperview];
+		self->_currentInfoView = self->_settingsView;
+		[self->_infoView bringSubviewToFront: self->_currentInfoView];
+	}];
 }
 
 // ----------------------------------------------------------------------------------------------------------- rulesInfo
@@ -1445,18 +1448,20 @@ done:
 {
 	if (_playSounds)
 		[_clickOpenSoundPlayer play];
-	
+
 	// Switch to display the "rules view".
 	_rulesView.alpha = 0.0;
 	[_infoView addSubview: _rulesView];
-	
-	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _rulesView];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_rulesView.alpha = 1.0;
-	_currentInfoView.alpha = 0.0;
-	[UIView commitAnimations];
+
+	// Crossfade to the rules view.
+	[UIView animateWithDuration: 0.2 animations: ^{
+		self->_rulesView.alpha = 1.0;
+		self->_currentInfoView.alpha = 0.0;
+	} completion: ^(BOOL finished) {
+		[self->_currentInfoView removeFromSuperview];
+		self->_currentInfoView = self->_rulesView;
+		[self->_infoView bringSubviewToFront: self->_currentInfoView];
+	}];
 }
 
 // ----------------------------------------------------------------------------------------------------------- closeInfo
@@ -1476,23 +1481,43 @@ done:
 	mainBounds = self.view.bounds;
 
 	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"SlideOutInfoView" context: nil];
-	[UIView setAnimationDuration: 0.5];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.0];
 	frame = _infoView.frame;
 	frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-	_infoView.frame = frame;
-	[UIView commitAnimations];
-	
+	[UIView animateWithDuration: 0.5 animations: ^{
+		self->_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.0];
+		self->_infoView.frame = frame;
+	} completion: ^(BOOL finished) {
+		self->_infoViewIsOpen = NO;
+
+		if (self->_currentInfoView)
+		{
+			[self->_currentInfoView removeFromSuperview];
+			self->_currentInfoView = nil;
+		}
+
+		// Fire off auto-putaway timer if the user enabled it.
+		if ((self->_wasAutoPutaway == NO) || ((self->_wasAutoPutawayMode == kAutoPutawayModeSmart) && (self->_autoPutawayMode == kAutoPutawayModeAll)))
+		{
+			self->_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self
+					selector: @selector (computerTaskTimer:) userInfo: nil repeats: NO];
+		}
+
+		// Start new game.
+		if (self->_gameWon)
+		{
+			if (self->_playSounds)
+				[self->_shufflePlayer play];
+			[self resetTable: YES];
+		}
+	}];
+
 	// If this is the first time we are dismissing the info view after launching the app.
 	if (_splashDismissed == NO)
 	{
 		_splashDismissed = YES;
-		
+
 		// Fire off timer to check for cards that can be put up in the foundation.
-		_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self 
+		_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self
 				selector: @selector (computerTaskTimer:) userInfo: nil repeats: NO];
 	}
 }
@@ -1687,13 +1712,15 @@ done:
 		// Update statistics.
 		[self updateLocalStatisticsInterface];
 		
-		// Animate-out the view sliding out while the dark view becomes clear again.
-		[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _gameOverView];
-		[UIView setAnimationDelegate: self];
-		[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-		_gameOverView.alpha = 1.0;
-		_currentInfoView.alpha = 0.0;
-		[UIView commitAnimations];
+		// Crossfade to the game over view.
+		[UIView animateWithDuration: 0.2 animations: ^{
+			self->_gameOverView.alpha = 1.0;
+			self->_currentInfoView.alpha = 0.0;
+		} completion: ^(BOOL finished) {
+			[self->_currentInfoView removeFromSuperview];
+			self->_currentInfoView = self->_gameOverView;
+			[self->_infoView bringSubviewToFront: self->_currentInfoView];
+		}];
 	}
 	else
 	{
@@ -1730,66 +1757,15 @@ done:
 		_darkView.userInteractionEnabled = YES;
 
 		// Animate-in the view sliding in while the dark view becomes darker.
-		[UIView beginAnimations: @"SlideInInfoView" context: nil];
-		[UIView setAnimationDuration: 0.5];
-		[UIView setAnimationDelegate: self];
-		[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-		_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
 		frame = _infoView.frame;
 		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
-		_infoView.frame = frame;
-		[UIView commitAnimations];
-	}
-}
-
-// ----------------------------------------------------------------------------------- animationDidStop:finished:context
-
-- (void) animationStopped: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context
-{
-	if ([animationID isEqualToString: @"SlideInInfoView"])
-	{
-		if (_currentInfoView == _gameOverView)
-		{
-			// Player won sound.
-			if (_playSounds)
-				[_winSoundPlayer play];
-		}
-	}
-	else if ([animationID isEqualToString: @"SlideOutInfoView"])
-	{
-		_infoViewIsOpen = NO;
-		
-		// No longer capture touch events.
-		_darkView.userInteractionEnabled = NO;
-		
-		if (_currentInfoView)
-		{
-			[_currentInfoView removeFromSuperview];
-			_currentInfoView = nil;
-		}
-		
-		// Fire off auto-putaway timer if the user enabled it.
-		if ((_wasAutoPutaway == NO) || ((_wasAutoPutawayMode == kAutoPutawayModeSmart) && (_autoPutawayMode == kAutoPutawayModeAll)))
-		{
-			_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self 
-					selector: @selector (computerTaskTimer:) userInfo: nil repeats: NO];
-		}
-		
-		// Start new game.
-		if (_gameWon)
-		{
-			// Shuffle sound.
-			if (_playSounds)
-				[_shufflePlayer play];
-			
-			// Deal new hand.
-			[self resetTable: YES];
-		}
-	}
-	else if ([animationID isEqualToString: @"FadeOutInfoSubview"])
-	{
-		[_currentInfoView removeFromSuperview];
-		_currentInfoView = (__bridge UIView *) context;
+		[UIView animateWithDuration: 0.5 animations: ^{
+			self->_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
+			self->_infoView.frame = frame;
+		} completion: ^(BOOL finished) {
+			if (self->_playSounds)
+				[self->_winSoundPlayer play];
+		}];
 	}
 }
 
