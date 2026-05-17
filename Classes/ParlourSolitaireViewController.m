@@ -5,6 +5,7 @@
 
 #import <AssertMacros.h>
 #import "ParlourSolitaireViewController.h"
+#import "CEStackPrivate.h"
 #import "PSStackView.h"
 
 
@@ -1829,7 +1830,7 @@ done:
 	[_stockView setLayout: kCEStackViewLayoutStacked];
 	[_stockView setBorderColor: [UIColor colorWithWhite: 0.0 alpha: 0.25]];
 	[_stockView setFillColor: nil];
-	[_stockView setTag: i];
+	[_stockView setTag: 0];
 	[_stockView setDelegate: self];
 	[_stockView setIdentifier: @"Stock"];
 	[_stockView setArchiveIdentifier: @"Stock"];
@@ -1843,7 +1844,7 @@ done:
 	[_wasteView setLayout: kCEStackViewLayoutStacked];
 	[_wasteView setBorderColor: nil];
 	[_wasteView setFillColor: nil];
-	[_wasteView setTag: i];
+	[_wasteView setTag: 0];
 	[_wasteView setDelegate: self];
 	[_wasteView setIdentifier: @"Waste"];
 	[_wasteView setArchiveIdentifier: @"Waste"];
@@ -2139,32 +2140,14 @@ skipAudio:
 }
 */
 
-// ------------------------------------------------------------------------------ shouldAutorotateToInterfaceOrientation
-
-- (BOOL) shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation) orientation
-{
-	return YES;
-}
-
 // --------------------------------------------------------------------------------------------- didReceiveMemoryWarning
 
 - (void) didReceiveMemoryWarning
 {
 	// Releases the view if it doesn't have a superview.
 	[super didReceiveMemoryWarning];
-	
+
 	// Release any cached data, images, etc that aren't in use.
-}
-
-// ------------------------------------------------------------------------------------------------------- viewDidUnload
-
-- (void) viewDidUnload
-{
-	// Release any retained subviews of the main view.
-	// e.g. self.myOutlet = nil;
-	_newButton = nil;
-	_undoButton = nil;
-	_infoButton = nil;
 }
 
 // ------------------------------------------------------------------------------------------------------------- dealloc

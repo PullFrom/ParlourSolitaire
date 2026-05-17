@@ -1171,20 +1171,11 @@ bail:
 			[_highlightedStack setHighlight: NO];
 			
 			// Notify observers that a card was dragged.
-			if (0)
-			{
-				[[NSNotificationCenter defaultCenter] postNotificationName: StackViewDidDragCardToStackNotification 
-						object: self userInfo: [NSDictionary dictionaryWithObjectsAndKeys: cardArray, @"cards", 
-						_highlightedStack, @"destinationStack", nil]];
-			}
-			else
-			{
-				[[NSNotificationQueue defaultQueue] enqueueNotification: 
-						[NSNotification notificationWithName: StackViewDidDragCardToStackNotification object: self 
-						userInfo: [NSDictionary dictionaryWithObjectsAndKeys: cardArray, @"cards", 
-						_highlightedStack, @"destinationStack", nil]] 
-						postingStyle: NSPostWhenIdle];
-			}
+			[[NSNotificationQueue defaultQueue] enqueueNotification:
+					[NSNotification notificationWithName: StackViewDidDragCardToStackNotification object: self
+					userInfo: [NSDictionary dictionaryWithObjectsAndKeys: cardArray, @"cards",
+					_highlightedStack, @"destinationStack", nil]]
+					postingStyle: NSPostWhenIdle];
 			
 			// Reset.
 			_cardRangeDragged = NSMakeRange (0, 0);
@@ -1538,7 +1529,7 @@ bail:
 	else if (abs(dragDelta.x) > (abs(dragDelta.y) + 2.))
 		gesture = kDragGestureMoving;
 #else
-	int			gesture;
+	int			gesture = kDragGestureNone;
 	CGPoint		location;
 	CGPoint		dragDelta;
 	

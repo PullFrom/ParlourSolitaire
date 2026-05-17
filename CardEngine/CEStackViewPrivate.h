@@ -54,4 +54,9 @@
 - (void) handleAnimation: (NSMutableDictionary *) dictionary;
 - (void) animateWithDictionary: (NSDictionary *) dictionary;
 
+// ------ stack notification handlers
+- (void) stackChangedCount: (NSNotification *) notification;
+- (void) stackChangedCardFlipped: (NSNotification *) notification;
+- (void) stackChangedOrder: (NSNotification *) notification;
+
 @end
