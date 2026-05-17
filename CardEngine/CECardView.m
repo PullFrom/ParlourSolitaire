@@ -239,12 +239,21 @@ bail:
 	// Draw label.
 	if (_label)
 	{
-		UIFont		*font;
-		CGRect		box;
-		CGRect		bounds;
-		
+		UIFont					*font;
+		CGRect					box;
+		CGRect					bounds;
+		NSMutableParagraphStyle	*paragraphStyle;
+		NSDictionary			*attributes;
+
 		font = [self fontForCorner];
-		box.size = [_label sizeWithFont: font];
+		paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+		paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+		paragraphStyle.alignment = NSTextAlignmentCenter;
+		attributes = @{ NSFontAttributeName: font,
+				NSForegroundColorAttributeName: [UIColor blackColor],
+				NSParagraphStyleAttributeName: paragraphStyle };
+
+		box.size = [_label sizeWithAttributes: attributes];
 		box.size.width = box.size.width + 6.0;
 		bounds = [self bounds];
 		box.origin.x = floor((bounds.size.width - box.size.width) / 2.0);
@@ -253,7 +262,7 @@ bail:
 		UIRectFill (box);
 		[[UIColor blackColor] set];
 		UIRectFrame (box);
-		[_label drawInRect: box withFont: font lineBreakMode: UILineBreakModeWordWrap alignment: UITextAlignmentCenter];
+		[_label drawInRect: box withAttributes: attributes];
 	}
 }
 

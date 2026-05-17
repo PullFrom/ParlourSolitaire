@@ -665,17 +665,21 @@ bail:
 	// Label.
 	if ((_label) && (_labelFont) && (_labelColor))
 	{
-		CGSize		size;
-		CGPoint		origin;
-		
-		[_labelColor set];
-		
-		size = [_label sizeWithFont: _labelFont];
+		CGSize					size;
+		CGPoint					origin;
+		NSMutableParagraphStyle	*paragraphStyle;
+		NSDictionary			*attributes;
+
+		paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+		paragraphStyle.lineBreakMode = NSLineBreakByTruncatingMiddle;
+		attributes = @{ NSFontAttributeName: _labelFont,
+				NSForegroundColorAttributeName: _labelColor,
+				NSParagraphStyleAttributeName: paragraphStyle };
+
+		size = [_label sizeWithAttributes: attributes];
 		origin = CGPointMake (floor((bounds.size.width - size.width) / 2.), floor((bounds.size.height - size.height) / 2.));
-		
-		[_label drawAtPoint: origin forWidth: bounds.size.width withFont: _labelFont fontSize: [_labelFont pointSize] 
-			lineBreakMode: UILineBreakModeMiddleTruncation 
-			baselineAdjustment: UIBaselineAdjustmentAlignBaselines];
+
+		[_label drawAtPoint: origin withAttributes: attributes];
 	}
 	
 	// Draw border.
