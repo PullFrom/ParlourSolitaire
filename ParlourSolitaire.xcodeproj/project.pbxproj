@@ -204,6 +204,7 @@
 		288765A50DF7441C002DB57D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 288765A40DF7441C002DB57D /* CoreGraphics.framework */; };
 		28AD733F0D9D9553002E5188 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 28AD733E0D9D9553002E5188 /* MainWindow.xib */; };
 		4CD21A932FBA5260009837D7 /* ParlourSolitaireSceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD21A922FBA5260009837D7 /* ParlourSolitaireSceneDelegate.m */; };
+		4CD21A952FBA6A7C009837D7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4CD21A942FBA6A7C009837D7 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -424,6 +425,7 @@
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4CD21A912FBA5260009837D7 /* ParlourSolitaireSceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ParlourSolitaireSceneDelegate.h; sourceTree = "<group>"; };
 		4CD21A922FBA5260009837D7 /* ParlourSolitaireSceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ParlourSolitaireSceneDelegate.m; sourceTree = "<group>"; };
+		4CD21A942FBA6A7C009837D7 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -680,6 +682,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				4CD21A942FBA6A7C009837D7 /* LaunchScreen.storyboard */,
 				26DE145912F4902B00FF88C6 /* CardEngine */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
@@ -940,6 +943,7 @@
 				26C29BE0150896A700D14332 /* 10D@2x.png in Resources */,
 				26C29BE1150896A700D14332 /* 10H@2x.png in Resources */,
 				26C29BE2150896A700D14332 /* 10S@2x.png in Resources */,
+				4CD21A952FBA6A7C009837D7 /* LaunchScreen.storyboard in Resources */,
 				26C29BE3150896A700D14332 /* 11C@2x.png in Resources */,
 				26C29BE4150896A700D14332 /* 11D@2x.png in Resources */,
 				26C29BE5150896A700D14332 /* 11H@2x.png in Resources */,
