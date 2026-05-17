@@ -83,7 +83,7 @@ static CGPDFDocumentRef	gCardPDFDocument = nil;
 	
 	// Super.
 	myself = [super initWithFrame: frame];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 	// Initialize instance variables.
 	_card = nil;
@@ -104,18 +104,6 @@ bail:
 	return self;
 }
 
-// ------------------------------------------------------------------------------------------------------------- dealloc
-
-- (void) dealloc
-{
-	// Release instance var.
-	[_card release];
-	[_highlightColor release];
-	
-	// Super.
-	[super dealloc];
-}
-
 // ------------------------------------------------------------------------------------------------------------ isOpaque
 
 - (BOOL) isOpaque
@@ -131,11 +119,9 @@ bail:
 	// NOP.
 	if (_card == card)
 		return;
-	
-	// Release, retain, redraw.
-	[_card release];
-	_card = [card retain];
-	
+
+	_card = card;
+
 	[self setNeedsDisplay];
 }
 
@@ -154,11 +140,9 @@ bail:
 	// NOP.
 	if (label == _label)
 		return;
-	
-	// Release, retain, assign.
-	[_label release];
-	_label = [label retain];
-	
+
+	_label = label;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }
@@ -255,12 +239,21 @@ bail:
 	// Draw label.
 	if (_label)
 	{
-		UIFont		*font;
-		CGRect		box;
-		CGRect		bounds;
-		
+		UIFont					*font;
+		CGRect					box;
+		CGRect					bounds;
+		NSMutableParagraphStyle	*paragraphStyle;
+		NSDictionary			*attributes;
+
 		font = [self fontForCorner];
-		box.size = [_label sizeWithFont: font];
+		paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+		paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+		paragraphStyle.alignment = NSTextAlignmentCenter;
+		attributes = @{ NSFontAttributeName: font,
+				NSForegroundColorAttributeName: [UIColor blackColor],
+				NSParagraphStyleAttributeName: paragraphStyle };
+
+		box.size = [_label sizeWithAttributes: attributes];
 		box.size.width = box.size.width + 6.0;
 		bounds = [self bounds];
 		box.origin.x = floor((bounds.size.width - box.size.width) / 2.0);
@@ -269,7 +262,7 @@ bail:
 		UIRectFill (box);
 		[[UIColor blackColor] set];
 		UIRectFrame (box);
-		[_label drawInRect: box withFont: font lineBreakMode: UILineBreakModeWordWrap alignment: UITextAlignmentCenter];
+		[_label drawInRect: box withAttributes: attributes];
 	}
 }
 
@@ -300,14 +293,14 @@ bail:
 		
 		// Get image URL from bundle.
 		bundle = CFBundleGetMainBundle ();
-		require (bundle, bail);
+		__Require (bundle, bail);
 		
 		base = CFBundleCopyResourcesDirectoryURL (bundle);
-		require (base, bail);
+		__Require (base, bail);
 		
 		url = CFURLCreateWithFileSystemPathRelativeToBase (kCFAllocatorDefault, CFSTR ("Cards.pdf"), 
 				kCFURLPOSIXPathStyle, false, base); 
-		require (url, bail);
+		__Require (url, bail);
 		
 		// Get PDF document.
 		gCardPDFDocument = CGPDFDocumentCreateWithURL (url);
@@ -318,11 +311,11 @@ bail:
 	}
 	
 	// Must have a PDF document by now.
-	require (gCardPDFDocument, bail);
+	__Require (gCardPDFDocument, bail);
 	
 	// Get the page of the PDF that corresponds to our card index.
 	cardPage = CGPDFDocumentGetPage (gCardPDFDocument, [_card index]);
-	require (cardPage, bail);
+	__Require (cardPage, bail);
 	
 	transform = CGPDFPageGetDrawingTransform (cardPage, kCGPDFCropBox, bounds, 0, true);
 	
@@ -365,14 +358,14 @@ bail:
 		
 		// Get image URL from bundle.
 		bundle = CFBundleGetMainBundle ();
-		require (bundle, bail);
+		__Require (bundle, bail);
 		
 		base = CFBundleCopyResourcesDirectoryURL (bundle);
-		require (base, bail);
+		__Require (base, bail);
 		
 		url = CFURLCreateWithFileSystemPathRelativeToBase (kCFAllocatorDefault, CFSTR ("Cards.pdf"), 
 				kCFURLPOSIXPathStyle, false, base); 
-		require (url, bail);
+		__Require (url, bail);
 		
 		// Get PDF document.
 		gCardPDFDocument = CGPDFDocumentCreateWithURL (url);
@@ -383,11 +376,11 @@ bail:
 	}
 	
 	// Must have a PDF document by now.
-	require (gCardPDFDocument, bail);
+	__Require (gCardPDFDocument, bail);
 	
 	// Get the page of the PDF that corresponds to our card index.
 	cardPage = CGPDFDocumentGetPage (gCardPDFDocument, 53);
-	require (cardPage, bail);
+	__Require (cardPage, bail);
 	
 	transform = CGPDFPageGetDrawingTransform (cardPage, kCGPDFCropBox, bounds, 0, true);
 	

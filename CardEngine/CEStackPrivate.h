@@ -14,6 +14,7 @@
 
 + (void) debugRandomFunction: (NSUInteger) seed;
 - (void) shuffleDeckWithSeed: (NSUInteger) seed;
+- (void) addAllCardsFromStackFaceUp: (CEStack *) stack;
 - (void) addCardWithoutNotification: (CECard *) card;
 - (void) promiseCard: (CECard *) card;
 - (void) promiseKeptForCard: (CECard *) card;

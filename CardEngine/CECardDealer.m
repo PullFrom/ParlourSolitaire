@@ -34,7 +34,7 @@
 	
 	// Super.
 	myself = [super init];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 	// Initialize instance variables.
 	_duration = kDefaultDealAnimationDuration;
@@ -54,17 +54,10 @@ bail:
 	// Finish any deal in progress.
 	if (_dealing)
 		[self quickComplete];
-	
-	// Release instance var.
-	[_sourceStack release];
-	[_destStack release];
-	
+
 	// Clean up timer.
 	if (_dealTimer)
 		[_dealTimer invalidate];
-	
-	// Super.
-	[super dealloc];
 }
 
 // --------------------------------------------------------------------------------------------------------- dealOneCard
@@ -80,8 +73,8 @@ bail:
 		if (_enableUndoGrouping)
 			[[CETableView sharedCardUndoManager] endUndoGrouping];
 		_count = 0;
-		[_sourceStack release];
-		[_destStack release];
+		_sourceStack = nil;
+		_destStack = nil;
 		_dealing = NO;
 	}
 	else
@@ -119,8 +112,8 @@ bail:
 		return;
 	
 	// Retain stacks.
-	_sourceStack = [source retain];
-	_destStack = [dest retain];
+	_sourceStack = source;
+	_destStack = dest;
 	_count = count;
 	_dealing = YES;
 	
@@ -169,8 +162,8 @@ bail:
 		if (_enableUndoGrouping)
 			[[CETableView sharedCardUndoManager] endUndoGrouping];
 		_count = 0;
-		[_sourceStack release];
-		[_destStack release];
+		_sourceStack = nil;
+		_destStack = nil;
 		_dealing = NO;
 	}
 }

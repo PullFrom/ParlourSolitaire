@@ -1,11 +1,13 @@
 // =====================================================================================================================
-//  ParlourSolitaireAppDelegate.h
+//  ParlourSolitaireSceneDelegate.h
 // =====================================================================================================================
 
 
 #import <UIKit/UIKit.h>
 
 
-@interface ParlourSolitaireAppDelegate : UIResponder <UIApplicationDelegate>
+@interface ParlourSolitaireSceneDelegate : UIResponder <UIWindowSceneDelegate>
+
+@property (strong, nonatomic) UIWindow *window;
 
 @end

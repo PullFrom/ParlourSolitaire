@@ -5,6 +5,7 @@
 
 #import <AssertMacros.h>
 #import "ParlourSolitaireViewController.h"
+#import "CEStackPrivate.h"
 #import "PSStackView.h"
 
 
@@ -72,9 +73,6 @@
 
 #define kHighlighterVOffset				448
 
-#define kResetTableAlertTag				1
-#define kUndoAllAlertTag				2
-#define kCardsToDealAlertTag			3
 
 #define kMaxLeaderboardScores			10
 
@@ -101,8 +99,8 @@ enum
 	CGRect	mainBounds;
 	CGRect	buttonFrame;
 	CGRect	frame;
-	
-	mainBounds = [[UIScreen mainScreen] bounds];
+
+	mainBounds = self.view.bounds;
 	
 	if (UIInterfaceOrientationIsPortrait (orientation))
 	{
@@ -206,17 +204,17 @@ enum
 		_infoButton.frame = buttonFrame;
 		[_infoButton setImage: [UIImage imageNamed: @"InfoSelectedL"] forState: UIControlStateHighlighted];
 		
-		_darkView.frame = CGRectMake (0.0, 0.0, mainBounds.size.height, mainBounds.size.width);
-		
+		_darkView.frame = CGRectMake (0.0, 0.0, mainBounds.size.width, mainBounds.size.height);
+
 		if (_infoView)
 		{
 			CGRect	frame;
-			
+
 			frame = _infoView.frame;
 			if (_infoViewIsOpen)
-				frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width - frame.size.height);
+				frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
 			else
-				frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+				frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 			_infoView.frame = frame;
 		}
 	}
@@ -777,7 +775,7 @@ done:
 		}
 	}
 	
-	count = deck.numberOfCards;
+	count = (int) deck.numberOfCards;
 	for (i = 0; i < count; i++)
 	{
 		CECard	*topCard;
@@ -816,16 +814,27 @@ done:
 	}
 	else
 	{
-		UIAlertView	*alert;
-		
 		// A game is in progress, allow the user to cancel the new game.
-		alert = [[UIAlertView alloc] initWithTitle: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil) 
-				message: NSLocalizedStringFromTable (@"If you start a new game this game will count as a loss.", @"Localizable", nil) 
-				delegate: self cancelButtonTitle: NSLocalizedStringFromTable (@"Cancel", @"Localizable", nil) 
-				otherButtonTitles: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil), nil];
-		alert.tag = kResetTableAlertTag;
-		[alert show];
-		[alert release];
+		UIAlertController *alert = [UIAlertController
+				alertControllerWithTitle: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil)
+				message: NSLocalizedStringFromTable (@"If you start a new game this game will count as a loss.", @"Localizable", nil)
+				preferredStyle: UIAlertControllerStyleAlert];
+
+		[alert addAction: [UIAlertAction
+				actionWithTitle: NSLocalizedStringFromTable (@"Cancel", @"Localizable", nil)
+				style: UIAlertActionStyleCancel
+				handler: nil]];
+
+		[alert addAction: [UIAlertAction
+				actionWithTitle: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil)
+				style: UIAlertActionStyleDestructive
+				handler: ^(UIAlertAction *action) {
+					if (self->_playSounds)
+						[self->_shufflePlayer play];
+					[self resetTable: YES];
+				}]];
+
+		[self presentViewController: alert animated: YES completion: nil];
 	}
 }
 
@@ -877,19 +886,33 @@ done:
 {
 	if (([[CETableView sharedCardUndoManager] canUndo]) && ([self seedUsedLast] != NSNotFound))
 	{
-		UIAlertView	*alert;
-		
 		if (_playSounds)
 			[_clickOpenSoundPlayer play];
-		
+
 		_undoAllAlertOpen = YES;
-		
+
 		// Allow the player to decide if they want to Undo to the beginning of the game.
-		alert = [[UIAlertView alloc] initWithTitle: UNDO_TITLE message: UNDO_MESSAGE delegate: self 
-				cancelButtonTitle: UNDO_CANCEL_BUTTON otherButtonTitles: UNDO_ALL_BUTTON, nil];
-		alert.tag = kUndoAllAlertTag;
-		[alert show];
-		[alert release];
+		UIAlertController *alert = [UIAlertController
+				alertControllerWithTitle: UNDO_TITLE
+				message: UNDO_MESSAGE
+				preferredStyle: UIAlertControllerStyleAlert];
+
+		[alert addAction: [UIAlertAction actionWithTitle: UNDO_CANCEL_BUTTON
+				style: UIAlertActionStyleCancel
+				handler: ^(UIAlertAction *action) {
+					self->_undoAllAlertOpen = NO;
+				}]];
+
+		[alert addAction: [UIAlertAction actionWithTitle: UNDO_ALL_BUTTON
+				style: UIAlertActionStyleDestructive
+				handler: ^(UIAlertAction *action) {
+					self->_undoAllAlertOpen = NO;
+					if (self->_playSounds)
+						[self->_shufflePlayer play];
+					[self resetTable: NO];
+				}]];
+
+		[self presentViewController: alert animated: YES completion: nil];
 	}
 }
 
@@ -959,8 +982,8 @@ done:
 				[allNames appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];
 				count = count + 1;
 			}
-			if (_localPlayer.alias)
-				[allNames appendString: _localPlayer.alias];
+			if (_localPlayer.displayName)
+				[allNames appendString: _localPlayer.displayName];
 			else
 				[allNames appendString: @"You"];
 			count = count + 1;
@@ -968,8 +991,8 @@ done:
 	}
 	else
 	{
-		if (_localPlayer.alias)
-			[allNames appendString: _localPlayer.alias];
+		if (_localPlayer.displayName)
+			[allNames appendString: _localPlayer.displayName];
 		else
 			[allNames appendString: @"You"];
 		count = count + 1;
@@ -1004,14 +1027,14 @@ done:
 			}
 			
 			[_localPlayer retrieveLocalScore: &played forCategory: _gamesPlayedCategory];
-			[allPlayed appendString: [NSString stringWithFormat: @"%d", played]];
+			[allPlayed appendString: [NSString stringWithFormat: @"%ld", (long) played]];
 			count = count + 1;
 		}
 	}
 	else
 	{
 		[_localPlayer retrieveLocalScore: &played forCategory: _gamesPlayedCategory];
-		[allPlayed appendString: [NSString stringWithFormat: @"%d", played]];
+		[allPlayed appendString: [NSString stringWithFormat: @"%ld", (long) played]];
 		count = count + 1;
 	}
 	
@@ -1044,14 +1067,14 @@ done:
 			}
 			
 			[_localPlayer retrieveLocalScore: &won forCategory: _gamesWonCategory];
-			[allWon appendString: [NSString stringWithFormat: @"%d", won]];
+			[allWon appendString: [NSString stringWithFormat: @"%ld", (long) won]];
 			count = count + 1;
 		}
 	}
 	else
 	{
 		[_localPlayer retrieveLocalScore: &won forCategory: _gamesWonCategory];
-		[allWon appendString: [NSString stringWithFormat: @"%d", won]];
+		[allWon appendString: [NSString stringWithFormat: @"%ld", (long) won]];
 		count = count + 1;
 	}
 	
@@ -1076,13 +1099,13 @@ done:
 			
 			if (gamesPlayed == 0)
 			{
-				[allPercent appendString: [NSString stringWithString: @"-"]];
-				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];				
+				[allPercent appendString: @"-"];
+				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];
 			}
 			else
 			{
-				[allPercent appendString: [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed]];
-				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];				
+				[allPercent appendString: [NSString stringWithFormat: @"%ld%%", (long) ((gamesWon * 100) / gamesPlayed)]];
+				[allPercent appendString: [NSString stringWithCharacters: &carriageReturn length: 1]];
 			}
 			
 			count = count + 1;
@@ -1100,7 +1123,7 @@ done:
 			if (played == 0)
 				[allPercent appendString: @"-"];
 			else
-				[allPercent appendString: [NSString stringWithFormat: @"%d%%", (won * 100) / played]];
+				[allPercent appendString: [NSString stringWithFormat: @"%ld%%", (long) ((won * 100) / played)]];
 			count = count + 1;
 		}
 	}
@@ -1109,7 +1132,7 @@ done:
 		if (played == 0)
 			[allPercent appendString: @"-"];
 		else
-			[allPercent appendString: [NSString stringWithFormat: @"%d%%", (won * 100) / played]];
+			[allPercent appendString: [NSString stringWithFormat: @"%ld%%", (long) ((won * 100) / played)]];
 		count = count + 1;
 	}
 	
@@ -1163,7 +1186,6 @@ done:
 - (void) info: (id) sender
 {
 	CGRect		mainBounds;
-	BOOL		portrait;
 	CGRect		frame;
 	
 	if (_playSounds)
@@ -1174,22 +1196,13 @@ done:
 	_wasAutoPutawayMode = _autoPutawayMode;
 	_warnedAboutCardsToDeal = NO;
 	
-	// Refresh the global scores.
-	if ((_localPlayer.usingGameCenter) && (_localPlayer.authenticated))
-	{
-		[_localPlayer retrieveLeaderboardScores: kMaxLeaderboardScores forCategory: _gamesWonCategory 
-				friendsOnly: _leaderboardFriendsOnly];
-	}
-	else
-	{
-		// Update the UI.
-		[self updateGlobalScoresInterface];
-	}
+	// Refresh the global scores. Leaderboard fetching uses deprecated GameKit APIs
+	// and is disabled pending the new GKLeaderboard.loadEntriesForPlayers: integration.
+	[self updateGlobalScoresInterface];
 	
 	// Get main bounds and orientation.
-	mainBounds = [[UIScreen mainScreen] bounds];
-	portrait = UIInterfaceOrientationIsPortrait ([UIApplication sharedApplication].statusBarOrientation);
-	
+	mainBounds = self.view.bounds;
+
 	// Create dark view to obscure card table. Initially it has a clear background.
 	// Add as subview to card table.
 	if (_infoView == nil)
@@ -1199,33 +1212,26 @@ done:
 		_infoView = [[UIImageView alloc] initWithImage: [UIImage imageNamed: @"PaperTablet"]];
 		_infoView.userInteractionEnabled = YES;
 		frame = _infoView.frame;
-		if (portrait)
-			frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-		else
-			frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 		_infoView.frame = frame;
 		[_darkView addSubview: _infoView];
 	}
-	
+
 	// Initially begin with "about view" being displayed.
 	_aboutView.alpha = 1.0;
 	[_infoView addSubview: _aboutView];
 	_currentInfoView = _aboutView;
-	
+
 	// Capture touch events.
 	_darkView.userInteractionEnabled = YES;
-	
+
 	// Animate-in the view sliding in while the dark view becomes darker.
-	[UIView beginAnimations: @"SlideInInfoView" context: nil];
-	[UIView setAnimationDuration: 0.5];
-	_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
 	frame = _infoView.frame;
-	if (portrait)
-		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
-	else
-		frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width - frame.size.height);
-	_infoView.frame = frame;
-	[UIView commitAnimations];
+	frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
+	[UIView animateWithDuration: 0.5 animations: ^{
+		self->_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
+		self->_infoView.frame = frame;
+	} completion: nil];
 }
 
 // ----------------------------------------------------------------------------------------------------------- aboutInfo
@@ -1234,18 +1240,20 @@ done:
 {
 	if (_playSounds)
 		[_clickOpenSoundPlayer play];
-	
+
 	// Switch to display the "about view".
 	_aboutView.alpha = 0.0;
 	[_infoView addSubview: _aboutView];
-	
-	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: _aboutView];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_aboutView.alpha = 1.0;
-	_currentInfoView.alpha = 0.0;
-	[UIView commitAnimations];
+
+	// Crossfade to the about view.
+	[UIView animateWithDuration: 0.2 animations: ^{
+		self->_aboutView.alpha = 1.0;
+		self->_currentInfoView.alpha = 0.0;
+	} completion: ^(BOOL finished) {
+		[self->_currentInfoView removeFromSuperview];
+		self->_currentInfoView = self->_aboutView;
+		[self->_infoView bringSubviewToFront: self->_currentInfoView];
+	}];
 }
 
 // --------------------------------------------------------------------------------------------- updateSettingsInterface
@@ -1369,13 +1377,13 @@ done:
 	
 	// Get number of games played and won.
 	[_localPlayer retrieveLocalScore: &gamesPlayed forCategory: _gamesPlayedCategory];
-	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%d", gamesPlayed];
-	
+	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesPlayed];
+
 	[_localPlayer retrieveLocalScore: &gamesWon forCategory: _gamesWonCategory];
-	_gamesWonLabel.text = [NSString stringWithFormat: @"%d", gamesWon];
-	
+	_gamesWonLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesWon];
+
 	if (gamesPlayed != 0)
-		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed];
+		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%ld%%", (long) ((gamesWon * 100) / gamesPlayed)];
 	else
 		_gamesWonPercentageLabel.text = @"-";
 }
@@ -1409,20 +1417,22 @@ done:
 		gamesWon = [number integerValue];
 	
 	// Reflect game statistics.
-	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%d", gamesPlayed];
-	_gamesWonLabel.text = [NSString stringWithFormat: @"%d", gamesWon];
+	_gamesPlayedLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesPlayed];
+	_gamesWonLabel.text = [NSString stringWithFormat: @"%ld", (long) gamesWon];
 	if (gamesPlayed == 0)
 		_gamesWonPercentageLabel.text = @"-";
 	else
-		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed];
+		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%ld%%", (long) ((gamesWon * 100) / gamesPlayed)];
 	
-	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: _settingsView];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_settingsView.alpha = 1.0;
-	_currentInfoView.alpha = 0.0;
-	[UIView commitAnimations];
+	// Crossfade to the settings view.
+	[UIView animateWithDuration: 0.2 animations: ^{
+		self->_settingsView.alpha = 1.0;
+		self->_currentInfoView.alpha = 0.0;
+	} completion: ^(BOOL finished) {
+		[self->_currentInfoView removeFromSuperview];
+		self->_currentInfoView = self->_settingsView;
+		[self->_infoView bringSubviewToFront: self->_currentInfoView];
+	}];
 }
 
 // ----------------------------------------------------------------------------------------------------------- rulesInfo
@@ -1431,18 +1441,20 @@ done:
 {
 	if (_playSounds)
 		[_clickOpenSoundPlayer play];
-	
+
 	// Switch to display the "rules view".
 	_rulesView.alpha = 0.0;
 	[_infoView addSubview: _rulesView];
-	
-	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: _rulesView];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_rulesView.alpha = 1.0;
-	_currentInfoView.alpha = 0.0;
-	[UIView commitAnimations];
+
+	// Crossfade to the rules view.
+	[UIView animateWithDuration: 0.2 animations: ^{
+		self->_rulesView.alpha = 1.0;
+		self->_currentInfoView.alpha = 0.0;
+	} completion: ^(BOOL finished) {
+		[self->_currentInfoView removeFromSuperview];
+		self->_currentInfoView = self->_rulesView;
+		[self->_infoView bringSubviewToFront: self->_currentInfoView];
+	}];
 }
 
 // ----------------------------------------------------------------------------------------------------------- closeInfo
@@ -1450,36 +1462,55 @@ done:
 - (void) closeInfo: (id) sender
 {
 	CGRect		mainBounds;
-	BOOL		portrait;
 	CGRect		frame;
-	
+
 	if (_playSounds)
 		[_clickCloseSoundPlayer play];
-	
-	mainBounds = [[UIScreen mainScreen] bounds];
-	portrait = UIInterfaceOrientationIsPortrait ([UIApplication sharedApplication].statusBarOrientation);
-	
+
+	// Disable touch capture immediately, so buttons underneath remain responsive
+	// even if the animation is disrupted by rotation.
+	_darkView.userInteractionEnabled = NO;
+
+	mainBounds = self.view.bounds;
+
 	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"SlideOutInfoView" context: nil];
-	[UIView setAnimationDuration: 0.5];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.0];
 	frame = _infoView.frame;
-	if (portrait)
-		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-	else
-		frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
-	_infoView.frame = frame;
-	[UIView commitAnimations];
-	
+	frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
+	[UIView animateWithDuration: 0.5 animations: ^{
+		self->_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.0];
+		self->_infoView.frame = frame;
+	} completion: ^(BOOL finished) {
+		self->_infoViewIsOpen = NO;
+
+		if (self->_currentInfoView)
+		{
+			[self->_currentInfoView removeFromSuperview];
+			self->_currentInfoView = nil;
+		}
+
+		// Fire off auto-putaway timer if the user enabled it.
+		if ((self->_wasAutoPutaway == NO) || ((self->_wasAutoPutawayMode == kAutoPutawayModeSmart) && (self->_autoPutawayMode == kAutoPutawayModeAll)))
+		{
+			self->_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self
+					selector: @selector (computerTaskTimer:) userInfo: nil repeats: NO];
+		}
+
+		// Start new game.
+		if (self->_gameWon)
+		{
+			if (self->_playSounds)
+				[self->_shufflePlayer play];
+			[self resetTable: YES];
+		}
+	}];
+
 	// If this is the first time we are dismissing the info view after launching the app.
 	if (_splashDismissed == NO)
 	{
 		_splashDismissed = YES;
-		
+
 		// Fire off timer to check for cards that can be put up in the foundation.
-		_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self 
+		_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self
 				selector: @selector (computerTaskTimer:) userInfo: nil repeats: NO];
 	}
 }
@@ -1488,16 +1519,20 @@ done:
 
 - (void) openLabSolitaireInAppStore: (id) sender
 {
-	[[UIApplication sharedApplication] openURL: 
-			[NSURL URLWithString: @"itms-apps://itunes.apple.com/app/lab-solitaire/id457535509?mt=8"]];
+	[[UIApplication sharedApplication]
+			openURL: [NSURL URLWithString: @"itms-apps://itunes.apple.com/app/lab-solitaire/id457535509?mt=8"]
+			options: @{}
+			completionHandler: nil];
 }
 
 // ------------------------------------------------------------------------------------------------ openGliderInAppStore
 
 - (void) openGliderInAppStore: (id) sender
 {
-	[[UIApplication sharedApplication] openURL: 
-			[NSURL URLWithString: @"itms-apps://itunes.apple.com/app/glider-classic/id463484447?mt=8"]];
+	[[UIApplication sharedApplication]
+			openURL: [NSURL URLWithString: @"itms-apps://itunes.apple.com/app/glider-classic/id463484447?mt=8"]
+			options: @{}
+			completionHandler: nil];
 }
 
 // ---------------------------------------------------------------------------------------------- setNumberOfCardsToDeal
@@ -1519,18 +1554,19 @@ done:
 	// Put up alert telling them that changes will not take effect immediately.
 	if ((_cardsToDealDesired != _cardsToDeal) && (_warnedAboutCardsToDeal == NO))
 	{
-		UIAlertView	*alert;
-		
 		_warnedAboutCardsToDeal = YES;
-		
+
 		// A game is in progress, we will not change the number of cards to deal until the next game.
-		alert = [[UIAlertView alloc] initWithTitle: NSLocalizedStringFromTable (@"Cards To Deal", @"Localizable", nil) 
-				message: NSLocalizedStringFromTable (@"The number of cards to deal will not take effect until the next game.", @"Localizable", nil) 
-				delegate: self cancelButtonTitle: nil 
-				otherButtonTitles: NSLocalizedStringFromTable (@"OK", @"Localizable", nil), nil];
-		alert.tag = kCardsToDealAlertTag;
-		[alert show];
-		[alert release];
+		UIAlertController *alert = [UIAlertController
+				alertControllerWithTitle: NSLocalizedStringFromTable (@"Cards To Deal", @"Localizable", nil)
+				message: NSLocalizedStringFromTable (@"The number of cards to deal will not take effect until the next game.", @"Localizable", nil)
+				preferredStyle: UIAlertControllerStyleAlert];
+
+		[alert addAction: [UIAlertAction actionWithTitle: NSLocalizedStringFromTable (@"OK", @"Localizable", nil)
+				style: UIAlertActionStyleDefault
+				handler: nil]];
+
+		[self presentViewController: alert animated: YES completion: nil];
 	}
 }
 
@@ -1648,8 +1684,6 @@ done:
 	
 	// Update UI.
 	[self updateSettingsInterface];
-	[_localPlayer retrieveLeaderboardScores: kMaxLeaderboardScores forCategory: _gamesWonCategory 
-			friendsOnly: _leaderboardFriendsOnly];
 }
 
 // ---------------------------------------------------------------------------------------------------- openGameOverView
@@ -1669,26 +1703,26 @@ done:
 		// Update statistics.
 		[self updateLocalStatisticsInterface];
 		
-		// Animate-out the view sliding out while the dark view becomes clear again.
-		[UIView beginAnimations: @"FadeOutInfoSubview" context: _gameOverView];
-		[UIView setAnimationDelegate: self];
-		[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-		_gameOverView.alpha = 1.0;
-		_currentInfoView.alpha = 0.0;
-		[UIView commitAnimations];
+		// Crossfade to the game over view.
+		[UIView animateWithDuration: 0.2 animations: ^{
+			self->_gameOverView.alpha = 1.0;
+			self->_currentInfoView.alpha = 0.0;
+		} completion: ^(BOOL finished) {
+			[self->_currentInfoView removeFromSuperview];
+			self->_currentInfoView = self->_gameOverView;
+			[self->_infoView bringSubviewToFront: self->_currentInfoView];
+		}];
 	}
 	else
 	{
 		CGRect		mainBounds;
-		BOOL		portrait;
 		CGRect		frame;
-		
+
 		_infoViewIsOpen = YES;
-		
+
 		// Get main bounds and orientation.
-		mainBounds = [[UIScreen mainScreen] bounds];
-		portrait = UIInterfaceOrientationIsPortrait ([UIApplication sharedApplication].statusBarOrientation);
-		
+		mainBounds = self.view.bounds;
+
 		// Create dark view to obscure card table. Initially it has a clear background.
 		// Add as subview to card table.
 		if (_infoView == nil)
@@ -1698,88 +1732,31 @@ done:
 			_infoView = [[UIImageView alloc] initWithImage: [UIImage imageNamed: @"PaperTablet"]];
 			_infoView.userInteractionEnabled = YES;
 			frame = _infoView.frame;
-			if (portrait)
-				frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-			else
-				frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+			frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 			_infoView.frame = frame;
 			[_darkView addSubview: _infoView];
 		}
-		
+
 		// Add "Game Over" view.
 		[_infoView addSubview: _gameOverView];
 		_currentInfoView = _gameOverView;
-		
+
 		// Update statistics.
 		[self updateLocalStatisticsInterface];
-		
+
 		// Capture touch events.
 		_darkView.userInteractionEnabled = YES;
-		
+
 		// Animate-in the view sliding in while the dark view becomes darker.
-		[UIView beginAnimations: @"SlideInInfoView" context: nil];
-		[UIView setAnimationDuration: 0.5];
-		[UIView setAnimationDelegate: self];
-		[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-		_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
 		frame = _infoView.frame;
-		if (portrait)
-			frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
-		else
-			frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width - frame.size.height);
-		_infoView.frame = frame;
-		[UIView commitAnimations];
-	}
-}
-
-// ----------------------------------------------------------------------------------- animationDidStop:finished:context
-
-- (void) animationStopped: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context
-{
-	if ([animationID isEqualToString: @"SlideInInfoView"])
-	{
-		if (_currentInfoView == _gameOverView)
-		{
-			// Player won sound.
-			if (_playSounds)
-				[_winSoundPlayer play];
-		}
-	}
-	else if ([animationID isEqualToString: @"SlideOutInfoView"])
-	{
-		_infoViewIsOpen = NO;
-		
-		// No longer capture touch events.
-		_darkView.userInteractionEnabled = NO;
-		
-		if (_currentInfoView)
-		{
-			[_currentInfoView removeFromSuperview];
-			_currentInfoView = nil;
-		}
-		
-		// Fire off auto-putaway timer if the user enabled it.
-		if ((_wasAutoPutaway == NO) || ((_wasAutoPutawayMode == kAutoPutawayModeSmart) && (_autoPutawayMode == kAutoPutawayModeAll)))
-		{
-			_computerTaskTimer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target: self 
-					selector: @selector (computerTaskTimer:) userInfo: nil repeats: NO];
-		}
-		
-		// Start new game.
-		if (_gameWon)
-		{
-			// Shuffle sound.
-			if (_playSounds)
-				[_shufflePlayer play];
-			
-			// Deal new hand.
-			[self resetTable: YES];
-		}
-	}
-	else if ([animationID isEqualToString: @"FadeOutInfoSubview"])
-	{
-		[_currentInfoView removeFromSuperview];
-		_currentInfoView = context;
+		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
+		[UIView animateWithDuration: 0.5 animations: ^{
+			self->_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
+			self->_infoView.frame = frame;
+		} completion: ^(BOOL finished) {
+			if (self->_playSounds)
+				[self->_winSoundPlayer play];
+		}];
 	}
 }
 
@@ -1796,7 +1773,10 @@ done:
 	NSError			*error;
 	
 	// Store orientation.
-	_orientation = self.interfaceOrientation;
+	CGRect viewBounds = self.view.bounds;
+	_orientation = (viewBounds.size.width > viewBounds.size.height)
+		? UIInterfaceOrientationLandscapeRight
+		: UIInterfaceOrientationPortrait;
 	
 	// Get standard defaults, what is the user preference for auto-putaway.
 	defaults = [NSUserDefaults standardUserDefaults];
@@ -1832,6 +1812,7 @@ done:
 	// Assign portrait and landscape images.
 	[(CETableView *) self.view setPortraitImagePath: @"TablePortrait"];
 	[(CETableView *) self.view setLandscapeImagePath: @"TableLandscape"];
+	self.view.contentMode = UIViewContentModeRedraw;
 	
 	// Create 'Deal' image view.
 	_dealImageView = [[UIImageView alloc] initWithImage: [UIImage imageNamed: @"Deal.png"]];
@@ -1841,7 +1822,6 @@ done:
 	_dealImageView.frame = frame;
 	_dealImageView.alpha = 0.5;
 	[(CETableView *) self.view addSubview: _dealImageView];
-	[_dealImageView release];
 	
 	// Create stock.
 	_stockView = [[PSStackView alloc] initWithFrame: 
@@ -1850,13 +1830,12 @@ done:
 	[_stockView setLayout: kCEStackViewLayoutStacked];
 	[_stockView setBorderColor: [UIColor colorWithWhite: 0.0 alpha: 0.25]];
 	[_stockView setFillColor: nil];
-	[_stockView setTag: i];
+	[_stockView setTag: 0];
 	[_stockView setDelegate: self];
 	[_stockView setIdentifier: @"Stock"];
 	[_stockView setArchiveIdentifier: @"Stock"];
 	_stockView.enableUndoGrouping = NO;
 	[(CETableView *) self.view addSubview: _stockView];
-	[_stockView release];
 	
 	// Create waste.
 	_wasteView = [[PSStackView alloc] initWithFrame: 
@@ -1865,13 +1844,12 @@ done:
 	[_wasteView setLayout: kCEStackViewLayoutStacked];
 	[_wasteView setBorderColor: nil];
 	[_wasteView setFillColor: nil];
-	[_wasteView setTag: i];
+	[_wasteView setTag: 0];
 	[_wasteView setDelegate: self];
 	[_wasteView setIdentifier: @"Waste"];
 	[_wasteView setArchiveIdentifier: @"Waste"];
 	_wasteView.enableUndoGrouping = NO;
 	[(CETableView *) self.view addSubview: _wasteView];
-	[_wasteView release];
 	
 	// Create foundations.
 	for (i = 0; i < 4; i++)
@@ -1899,7 +1877,6 @@ done:
 		[_foundationViews[i] setArchiveIdentifier: [NSString stringWithFormat: @"Foundation%d", i]];
 		_foundationViews[i].enableUndoGrouping = NO;
 		[(CETableView *) self.view addSubview: _foundationViews[i]];
-		[_foundationViews[i] release];
 	}
 	
 	// Create tableau.
@@ -1933,11 +1910,10 @@ done:
 		_tableauViews[i].enableUndoGrouping = NO;
 		[_tableauViews[i] setOrderly: NO];
 		[(CETableView *) self.view addSubview: _tableauViews[i]];
-		[_tableauViews[i] release];
 	}
 	
 	// Layout the buttons.
-	mainBounds = [[UIScreen mainScreen] bounds];
+	mainBounds = self.view.bounds;
 	
 	// New button.
 	_newButton = [[UIButton alloc] initWithFrame: CGRectMake (kPNewButtonX, kPNewButtonY, kButtonWide, kButtonTall)];
@@ -1975,7 +1951,7 @@ done:
 	// Load sounds.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"Shuffle" ofType: @"wav"]];
 	_shufflePlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_shufflePlayer, skipAudio);
+	__Require (_shufflePlayer, skipAudio);
 	[_shufflePlayer prepareToPlay];
 	
 	// Load "draw card" sounds.
@@ -1983,7 +1959,7 @@ done:
 	{
 		audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: [NSString stringWithFormat: @"CardDraw%d", i] ofType: @"wav"]];
 		_cardDrawPlayers[i] = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-		require (_cardDrawPlayers[i], skipAudio);
+		__Require (_cardDrawPlayers[i], skipAudio);
 		[_cardDrawPlayers[i] prepareToPlay];
 	}
 
@@ -1992,31 +1968,31 @@ done:
 	{
 		audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: [NSString stringWithFormat: @"CardPlace%d", i] ofType: @"wav"]];
 		_cardPlacePlayers[i] = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-		require (_cardPlacePlayers[i], skipAudio);
+		__Require (_cardPlacePlayers[i], skipAudio);
 		[_cardPlacePlayers[i] prepareToPlay];
 	}
 	
 	// Click sounds.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"ClickOpen" ofType: @"wav"]];
 	_clickOpenSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_clickOpenSoundPlayer, skipAudio);
+	__Require (_clickOpenSoundPlayer, skipAudio);
 	[_clickOpenSoundPlayer prepareToPlay];
 	
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"ClickClose" ofType: @"wav"]];
 	_clickCloseSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_clickCloseSoundPlayer, skipAudio);
+	__Require (_clickCloseSoundPlayer, skipAudio);
 	[_clickCloseSoundPlayer prepareToPlay];
 	
 	// Undo sound.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"Blip" ofType: @"wav"]];
 	_undoSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_undoSoundPlayer, skipAudio);
+	__Require (_undoSoundPlayer, skipAudio);
 	[_undoSoundPlayer prepareToPlay];
 
 	// Player won sound.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"Babip" ofType: @"wav"]];
 	_winSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_winSoundPlayer, skipAudio);
+	__Require (_winSoundPlayer, skipAudio);
 	[_winSoundPlayer prepareToPlay];
 	
 skipAudio:
@@ -2120,9 +2096,34 @@ skipAudio:
 #pragma mark ------ view controller methods
 // ------------------------------------------------------------- willRotateToInterfaceOrientation:toInterfaceOrientation
 
-- (void) willRotateToInterfaceOrientation: (UIInterfaceOrientation) orientation duration: (NSTimeInterval) duration
+- (void) viewWillTransitionToSize: (CGSize) size withTransitionCoordinator: (id<UIViewControllerTransitionCoordinator>) coordinator
 {
-	[self adjustLayoutForOrientation: orientation];
+	[super viewWillTransitionToSize: size withTransitionCoordinator: coordinator];
+
+	UIInterfaceOrientation newOrientation = (size.width > size.height)
+		? UIInterfaceOrientationLandscapeRight
+		: UIInterfaceOrientationPortrait;
+
+	[coordinator animateAlongsideTransition: ^(id<UIViewControllerTransitionCoordinatorContext> context) {
+		[self adjustLayoutForOrientation: newOrientation];
+	} completion: nil];
+}
+
+// ------------------------------------------------------------------------------------------------ viewDidLayoutSubviews
+
+- (void) viewDidLayoutSubviews
+{
+	[super viewDidLayoutSubviews];
+
+	if (!_initialLayoutApplied)
+	{
+		_initialLayoutApplied = YES;
+		CGRect bounds = self.view.bounds;
+		UIInterfaceOrientation orientation = (bounds.size.width > bounds.size.height)
+			? UIInterfaceOrientationLandscapeRight
+			: UIInterfaceOrientationPortrait;
+		[self adjustLayoutForOrientation: orientation];
+	}
 }
 
 /*
@@ -2139,32 +2140,14 @@ skipAudio:
 }
 */
 
-// ------------------------------------------------------------------------------ shouldAutorotateToInterfaceOrientation
-
-- (BOOL) shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation) orientation
-{
-	return YES;
-}
-
 // --------------------------------------------------------------------------------------------- didReceiveMemoryWarning
 
 - (void) didReceiveMemoryWarning
 {
 	// Releases the view if it doesn't have a superview.
 	[super didReceiveMemoryWarning];
-	
+
 	// Release any cached data, images, etc that aren't in use.
-}
-
-// ------------------------------------------------------------------------------------------------------- viewDidUnload
-
-- (void) viewDidUnload
-{
-	// Release any retained subviews of the main view.
-	// e.g. self.myOutlet = nil;
-	[_newButton release];
-	[_undoButton release];
-	[_infoButton release];
 }
 
 // ------------------------------------------------------------------------------------------------------------- dealloc
@@ -2173,7 +2156,7 @@ skipAudio:
 {
 	// No more observing.
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
-	
+
 	// Clean up timers.
 	if (_computerTaskTimer)
 		[_computerTaskTimer invalidate];
@@ -2181,40 +2164,8 @@ skipAudio:
 	if (_undoHeldTimer)
 		[_undoHeldTimer invalidate];
 	_undoHeldTimer = nil;
-	
-	// Super.
-	[super dealloc];
 }
 
-
-#pragma mark ------ alert view delegate methods
-//--------------------------------------------------------------------------------------- alertView:clickedButtonAtIndex
-
-- (void) alertView: (UIAlertView *) alertView clickedButtonAtIndex: (NSInteger) buttonIndex
-{
-	if (alertView.tag == kResetTableAlertTag)
-	{
-		if (buttonIndex == 1)
-		{
-			if (_playSounds)
-				[_shufflePlayer play];
-			
-			[self resetTable: YES];
-		}
-	}
-	else if (alertView.tag == kUndoAllAlertTag)
-	{
-		_undoAllAlertOpen = NO;
-		
-		if (buttonIndex == 1)		// Undo all.
-		{
-			if (_playSounds)
-				[_shufflePlayer play];
-			
-			[self resetTable: NO];
-		}
-	}
-}
 
 #pragma mark ------ card dealer delegate methods
 // --------------------------------------------------------------------------------------------- cardDealerCompletedDeal
@@ -2233,7 +2184,7 @@ skipAudio:
 	NSUInteger	cardIndex;
 	NSUInteger	cardCount;
 	NSUInteger	numberOfCardsDragging;
-	int			i;
+	NSUInteger	i;
 	CECard		*cardTesting;
 	BOOL		allowDrag = NO;
 	
@@ -2656,12 +2607,8 @@ done:
 
 - (void) localPlayerAuthenticated: (LocalPlayer *) player
 {
-	[_localPlayer retrieveLeaderboardScores: kMaxLeaderboardScores forCategory: _gamesWonCategory 
-			friendsOnly: _leaderboardFriendsOnly];
-	
-	// Fetch player's leaderboard score.
-	[_localPlayer retrieveLeaderboardScoreForLocalPlayerForCategory: _gamesPlayedCategory];
-	[_localPlayer retrieveLeaderboardScoreForLocalPlayerForCategory: _gamesWonCategory];
+	// Leaderboard fetching is disabled pending the new GKLeaderboard.loadEntriesForPlayers:
+	// integration. Local stats are still kept in NSUserDefaults.
 }
 
 // --------------------------------------------------------------------------- localPlayer:failedAuthenticationWithError
@@ -2674,7 +2621,6 @@ done:
 	[_leaderboardPlayerIDs removeAllObjects];
 	[_leaderboardGamesPlayed removeAllObjects];
 	[_leaderboardGamesWon removeAllObjects];
-	[_leaderboardAliases release];
 	_leaderboardAliases = nil;
 	_playerLeaderboardIndex = NSNotFound;
 	
@@ -2723,13 +2669,13 @@ done:
 				
 				leaderboardValue = [[leaderboard objectAtIndex: index] integerValue];
 				if (localScore > leaderboardValue)
-					[leaderboard replaceObjectAtIndex: index withObject: [NSString stringWithFormat: @"%d", localScore]];
+					[leaderboard replaceObjectAtIndex: index withObject: [NSString stringWithFormat: @"%ld", (long) localScore]];
 				else if (leaderboardValue > localScore)
 					[_localPlayer postLocalScore: leaderboardValue forCategory: category];
 			}
 			else
 			{
-				[leaderboard addObject: [NSString stringWithFormat: @"%d", localScore]];
+				[leaderboard addObject: [NSString stringWithFormat: @"%ld", (long) localScore]];
 			}
 			
 			playerIndex = index;
@@ -2742,91 +2688,6 @@ done:
 	return playerIndex;
 }
 
-// -------------------------------------------------------- localPlayer:retrievedLeaderboardScores:playerIDs:forCategory
-
-- (void) localPlayer: (LocalPlayer *) player retrievedLeaderboardScores: (NSArray *) scores 
-		playerIDs: (NSArray *) players forCategory: (NSString *) category
-{
-	if ([category isEqualToString: _gamesWonCategory])
-	{
-		// Copy the playerID data.
-		[self copyPlayerIDs: players toOurArray: _leaderboardPlayerIDs];
-		
-		// Copy the leaderboard data.
-		[self copyLeaderboardScores: scores toOurArray: _leaderboardGamesWon];
-		
-		// If our local score is greater than the leaderboard score, substitute our local score in the games-won array.
-		_playerLeaderboardIndex = [self mergeLocalPlayerScoreWithLeaderboardScores: _leaderboardGamesWon forCategory: category];
-		
-		// Fetch the number of games won for the leaderboard players.
-		[_localPlayer retrieveLeaderboardScoresForPlayerIDs: _leaderboardPlayerIDs forCategory: _gamesPlayedCategory];
-	}
-	else if ([category isEqualToString: _gamesPlayedCategory])
-	{
-		// Copy the leaderboard data.
-		[self copyLeaderboardScores: scores toOurArray: _leaderboardGamesPlayed];
-		
-		// If our local score is greater than the leaderboard score, substitute our local score in the games-played array.
-		if (_playerLeaderboardIndex != NSNotFound)
-			[self mergeLocalPlayerScoreWithLeaderboardScores: _leaderboardGamesPlayed forCategory: category];
-		
-		// Fetch the names for the player ID's.
-		if ((_leaderboardPlayerIDs) && ([_leaderboardPlayerIDs count] > 0))
-		{
-			[_localPlayer retrieveAliasesForPlayerIDs: _leaderboardPlayerIDs];
-		}
-		else
-		{
-			[_leaderboardAliases release];
-			_leaderboardAliases = nil;
-			[self updateGlobalScoresInterface];
-		}
-	}
-}
-
-// ----------------------------------------------------------------- retrievedLeaderboardScoreForLocalPlayer:forCategory
-
-- (void) localPlayer: (LocalPlayer *) player retrievedLeaderboardScoreForLocalPlayer: (int64_t) score forCategory: (NSString *) category
-{
-	if ([category isEqualToString: _gamesWonCategory])
-	{
-		NSInteger	gamesWon;
-		
-		[_localPlayer retrieveLocalScore: &gamesWon forCategory: _gamesWonCategory];
-		if (score > gamesWon)
-			[_localPlayer postLocalScore: score forCategory: _gamesWonCategory];
-	}
-	else if ([category isEqualToString: _gamesPlayedCategory])
-	{
-		NSInteger	gamesPlayed;
-		
-		[_localPlayer retrieveLocalScore: &gamesPlayed forCategory: _gamesPlayedCategory];
-		if (score > gamesPlayed)
-			[_localPlayer postLocalScore: score forCategory: _gamesPlayedCategory];
-	}
-}
-
-// ---------------------------------------------------------------------------- localPlayer:retrievedAliasesForPlayerIDs
-
-- (void) localPlayer: (LocalPlayer *) player retrievedAliasesForPlayerIDs: (NSArray *) aliases
-{
-	// Toss previous alias array.
-	[_leaderboardAliases release];
-	_leaderboardAliases = nil;
-	if (aliases)
-		_leaderboardAliases = [aliases copy];
-	
-	// Update the UI.
-	[self updateGlobalScoresInterface];
-}
-
-// -------------------------------------------------------------------- localPlayer:failedRetrieveScoreForCategory:error
-
-- (void) localPlayer: (LocalPlayer *) player failedRetrieveScoreForCategory: (NSString *) category error: (NSError *) error
-{
-	printf ("localPlayer:failedRetrieveScoreForCategory:error: %s\n", [[error description] cStringUsingEncoding: NSUTF8StringEncoding]);
-}
-
 // ------------------------------------------------------------------------ localPlayer:failedPostScoreForCategory:error
 
 - (void) localPlayer: (LocalPlayer *) player failedPostScoreForCategory: (NSString *) category error: (NSError *) error
@@ -2834,11 +2695,11 @@ done:
 	printf ("localPlayer:failedPostScoreForCategory:error: %s\n", [[error description] cStringUsingEncoding: NSUTF8StringEncoding]);
 }
 
-// ----------------------------------------------------------------------- localPlayer:failedRetrieveAliasesForPlayerIDs
+// -------------------------------------------- localPlayer:needsToPresentAuthenticationViewController:
 
-- (void) localPlayer: (LocalPlayer *) player failedRetrieveAliasesForPlayerIDs: (NSError *) error
+- (void) localPlayer: (LocalPlayer *) player needsToPresentAuthenticationViewController: (UIViewController *) viewController
 {
-	printf ("localPlayer:failedRetrieveAliasesForPlayerIDs: %s\n", [[error description] cStringUsingEncoding: NSUTF8StringEncoding]);
+	[self presentViewController: viewController animated: YES completion: nil];
 }
 
 @end

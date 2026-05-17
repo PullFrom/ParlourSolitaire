@@ -16,8 +16,8 @@
 	NSInteger	_animatingCount;
 }
 
-@property(nonatomic,retain)	NSString		*portraitImagePath;		// If nil no image is drawn.
-@property(nonatomic,retain)	NSString		*landscapeImagePath;	// If nil no image is drawn.
+@property(nonatomic,strong)	NSString		*portraitImagePath;		// If nil no image is drawn.
+@property(nonatomic,strong)	NSString		*landscapeImagePath;	// If nil no image is drawn.
 @property(nonatomic,readonly)	BOOL		animationInProgress;	// Returns YES if there is an animation in progress.
 
 // Returns a singleton NSUndoManager. All card drags register with this undo manager.

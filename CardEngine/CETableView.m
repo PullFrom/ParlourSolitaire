@@ -37,7 +37,7 @@ static NSUndoManager	*_gSharedUndoManager = nil;
 	CGRect	frame;
 	
 	// Get application frame.
-	frame = [[UIScreen mainScreen] applicationFrame];
+	frame = [[UIScreen mainScreen] bounds];
 	
 	if (orientation == UIInterfaceOrientationPortrait)
 	{
@@ -117,23 +117,11 @@ static NSUndoManager	*_gSharedUndoManager = nil;
 	
 	// Super.
 	myself = [super initWithFrame: frame];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 bail:
 	
 	return myself;
-}
-
-// ------------------------------------------------------------------------------------------------------------- dealloc
-
-- (void) dealloc
-{
-	// Release instance variables.
-	[_portraitImagePath release];
-	[_landscapeImagePath release];
-	
-	// Super.
-	[super dealloc];
 }
 
 // -------------------------------------------------------------------------------------------------------- drawGradient
@@ -160,10 +148,10 @@ bail:
 
 - (void) drawRect: (CGRect) rect
 {
-	UIInterfaceOrientation	orientation;
-	
-	orientation = [[UIApplication sharedApplication] statusBarOrientation];
-	if (UIInterfaceOrientationIsPortrait (orientation))
+	CGRect bounds = self.bounds;
+	BOOL portrait = (bounds.size.height >= bounds.size.width);
+
+	if (portrait)
 	{
 		if (_portraitImagePath)
 			[[UIImage imageNamed: _portraitImagePath] drawAtPoint: CGPointMake (0.0, 0.0)];

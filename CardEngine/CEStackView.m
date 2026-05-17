@@ -58,13 +58,13 @@ NSString *const StackViewCardReleasedNotification = @"StackViewCardReleased";
 	
 	// Super.
 	myself = [super initWithFrame: frame];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 	// Default instance variable values.
 	_borderColor = [[UIColor alloc] initWithRed: 1. green: 1. blue: 1. alpha: 0.5];
 	_fillColor = [[UIColor alloc] initWithRed: 0.3 green: 0.8 blue: 0.3 alpha: 0.5];
 	_highlightColor = [[UIColor alloc] initWithRed: 0.0 green: 0.0 blue: 0.0 alpha: 0.25];
-	_labelFont = [[UIFont fontWithName: @"Arial" size: 32] retain];
+	_labelFont = [UIFont fontWithName: @"Arial" size: 32];
 	_labelColor = [[UIColor alloc] initWithRed: 0.07 green: 0.34 blue: 0.10 alpha: 1.];
 	_layout = kCEStackViewLayoutStandardSpread;
 	_cornerRadius = -1.0;
@@ -83,10 +83,10 @@ NSString *const StackViewCardReleasedNotification = @"StackViewCardReleased";
 	self.exclusiveTouch = YES;	// <--- EXPERIMENT.
 	
 	// Add empty stack by default.
-	[self setStack: [[[CEStack alloc] init] autorelease]];
-	
+	[self setStack: [[CEStack alloc] init]];
+
 bail:
-	
+
 	return self;
 }
 
@@ -96,19 +96,6 @@ bail:
 {
 	// Stop listening for notifications.
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
-	
-	// Release instance vars.
-	[_borderColor release];
-	[_fillColor release];
-	[_highlightColor release];
-	[_label release];
-	[_labelFont release];
-	[_labelColor release];
-	[_cardViews release];
-	[_stack release];
-	
-	// Super.
-	[super dealloc];
 }
 
 // ------------------------------------------------------------------------------------------------------------ isOpaque
@@ -147,10 +134,8 @@ bail:
 	[[NSNotificationCenter defaultCenter] removeObserver: self name: @"StackDidFlipCard" object: _stack];
 	[[NSNotificationCenter defaultCenter] removeObserver: self name: @"StackDidChangeOrder" object: _stack];
 	
-	// Release, retain, assign.
-	[_stack release];
-	_stack = [stack retain];
-	
+	_stack = stack;
+
 	// Listen for changes in the stack.
 	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector (stackChangedCount:) 
 			name: @"StackDidChangeCount" object: _stack];
@@ -220,11 +205,9 @@ bail:
 	// NOP
 	if (color == _borderColor)
 		return;
-	
-	// Release, retain, assign.
-	[_borderColor release];
-	_borderColor = [color retain];
-	
+
+	_borderColor = color;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }
@@ -244,11 +227,9 @@ bail:
 	// NOP
 	if (color == _fillColor)
 		return;
-	
-	// Release, retain, assign.
-	[_fillColor release];
-	_fillColor = [color retain];
-	
+
+	_fillColor = color;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }
@@ -268,11 +249,9 @@ bail:
 	// NOP.
 	if (label == _label)
 		return;
-	
-	// Release, retain, assign.
-	[_label release];
-	_label = [label retain];
-	
+
+	_label = label;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }
@@ -292,11 +271,9 @@ bail:
 	// NOP.
 	if (font == _labelFont)
 		return;
-	
-	// Release, retain, assign.
-	[_labelFont release];
-	_labelFont = [font retain];
-	
+
+	_labelFont = font;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }
@@ -316,11 +293,9 @@ bail:
 	// NOP.
 	if (color == _labelColor)
 		return;
-	
-	// Release, retain, assign.
-	[_labelColor release];
-	_labelColor = [color retain];
-	
+
+	_labelColor = color;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }
@@ -494,9 +469,9 @@ bail:
 - (void) dealCard: (CECard *) card toStackView: (CEStackView *) stack faceUp: (BOOL) faceUp duration: (NSTimeInterval) duration
 {
 	// Param check.
-	require (stack, bail);
-	require (_stack, bail);
-	require ([_stack stackContainsCard: card], bail);
+	__Require (stack, bail);
+	__Require (_stack, bail);
+	__Require ([_stack stackContainsCard: card], bail);
 	
 	// Register for 'undo'.
 	[self registerDealCard: card stackView: stack duration: duration];
@@ -513,7 +488,7 @@ bail:
 		dictionary = [[NSMutableDictionary alloc] initWithCapacity: 3];
 		
 		// Add animation type key to dictionary.
-		[dictionary setObject: [NSString stringWithString: @"moveCardFromPointToPoint"] forKey: @"type"];
+		[dictionary setObject: @"moveCardFromPointToPoint" forKey: @"type"];
 		
 		// Add card, source and destination stack and faceup-edness to animation dictionary.
 		[dictionary setObject: card forKey: @"card"];
@@ -523,7 +498,7 @@ bail:
 		
 		// Get card view that is going to animate.
 		sourceView = [self cardViewForCard: card];
-		require (sourceView, abortAnimation);
+		__Require (sourceView, abortAnimation);
 		
 		// Determine the coordinate to move from.
 		point = sourceView.center;
@@ -548,29 +523,26 @@ bail:
 		
 		// Hide source view.
 		[sourceView setHidden: YES];
-		
+
 		// Remove card from our own stack.
-		[card retain];
 		[_stack removeCard: card];
-		
+
 		// Promise a card.
 		[[stack stack] promiseCard: card];
-		
+
 		// Call method that prepares the animation based on objects we put in the dictionary.
 		[self handleAnimation: dictionary];
 	}
 	else
 	{
 abortAnimation:
-		
+
 		// Remove card from our own stack.
-		[card retain];
 		[_stack removeCard: card];
-		
+
 		// Flip and add card to destination stack.
 		[card setFaceUp: faceUp];
 		[[stack stack] addCard: card];
-		[card release];
 	}
 	
 	// Notify observers that a card is being dragged.
@@ -587,8 +559,8 @@ bail:
 - (void) flipCard: (CECard *) card faceUp: (BOOL) faceUp duration: (NSTimeInterval) duration
 {
 	// Param check.
-	require (card, bail);
-	require (_stack, bail);
+	__Require (card, bail);
+	__Require (_stack, bail);
 	
 	// Skip out if this is not our card.
 	if ([_stack stackContainsCard: card] == NO)
@@ -612,7 +584,7 @@ bail:
 		dictionary = [[NSMutableDictionary alloc] initWithCapacity: 3];
 		
 		// Add animation type key to dictionary.
-		[dictionary setObject: [NSString stringWithString: @"flipCard"] forKey: @"type"];
+		[dictionary setObject: @"flipCard" forKey: @"type"];
 		
 		// Add card, duration, face-upedness to animation dictionary.
 		[dictionary setObject: card forKey: @"card"];
@@ -621,7 +593,7 @@ bail:
 		
 		// Get the bounds for the flipping card.
 		sourceView = [self cardViewForCard: card];
-		require (sourceView, abortAnimation);
+		__Require (sourceView, abortAnimation);
 		frame = [self convertRect: [sourceView frame] toView: [self superview]];
 		
 		// Add frame to animation dictionary.
@@ -693,17 +665,21 @@ bail:
 	// Label.
 	if ((_label) && (_labelFont) && (_labelColor))
 	{
-		CGSize		size;
-		CGPoint		origin;
-		
-		[_labelColor set];
-		
-		size = [_label sizeWithFont: _labelFont];
+		CGSize					size;
+		CGPoint					origin;
+		NSMutableParagraphStyle	*paragraphStyle;
+		NSDictionary			*attributes;
+
+		paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+		paragraphStyle.lineBreakMode = NSLineBreakByTruncatingMiddle;
+		attributes = @{ NSFontAttributeName: _labelFont,
+				NSForegroundColorAttributeName: _labelColor,
+				NSParagraphStyleAttributeName: paragraphStyle };
+
+		size = [_label sizeWithAttributes: attributes];
 		origin = CGPointMake (floor((bounds.size.width - size.width) / 2.), floor((bounds.size.height - size.height) / 2.));
-		
-		[_label drawAtPoint: origin forWidth: bounds.size.width withFont: _labelFont fontSize: [_labelFont pointSize] 
-			lineBreakMode: UILineBreakModeMiddleTruncation 
-			baselineAdjustment: UIBaselineAdjustmentAlignBaselines];
+
+		[_label drawAtPoint: origin withAttributes: attributes];
 	}
 	
 	// Draw border.
@@ -1195,20 +1171,11 @@ bail:
 			[_highlightedStack setHighlight: NO];
 			
 			// Notify observers that a card was dragged.
-			if (0)
-			{
-				[[NSNotificationCenter defaultCenter] postNotificationName: StackViewDidDragCardToStackNotification 
-						object: self userInfo: [NSDictionary dictionaryWithObjectsAndKeys: cardArray, @"cards", 
-						_highlightedStack, @"destinationStack", nil]];
-			}
-			else
-			{
-				[[NSNotificationQueue defaultQueue] enqueueNotification: 
-						[NSNotification notificationWithName: StackViewDidDragCardToStackNotification object: self 
-						userInfo: [NSDictionary dictionaryWithObjectsAndKeys: cardArray, @"cards", 
-						_highlightedStack, @"destinationStack", nil]] 
-						postingStyle: NSPostWhenIdle];
-			}
+			[[NSNotificationQueue defaultQueue] enqueueNotification:
+					[NSNotification notificationWithName: StackViewDidDragCardToStackNotification object: self
+					userInfo: [NSDictionary dictionaryWithObjectsAndKeys: cardArray, @"cards",
+					_highlightedStack, @"destinationStack", nil]]
+					postingStyle: NSPostWhenIdle];
 			
 			// Reset.
 			_cardRangeDragged = NSMakeRange (0, 0);
@@ -1296,7 +1263,6 @@ bail:
 		
 		// Add to our array.
 		[_draggedCardViews addObject: draggedCard];
-		[draggedCard release];
 	}
 	
 bail:
@@ -1324,96 +1290,82 @@ bail:
 
 - (void) returnDraggedCardsWithAnimation
 {
-	NSUInteger	i;
 	CECard		*card = nil;
 	CETableView	*cardTable;
-	
+
 	// Indicate an animation is in progress.
 	_animationRefCount += 1;
-	
-	[UIView beginAnimations: nil context: nil];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (draggedCardsReturned:finished:context:)];
-	[UIView setAnimationDuration: kCardMoveAnimationSeconds];
-	
-	// Loop over dragged cards - return to original location.
-	for (i = _cardRangeDragged.location; i < NSMaxRange (_cardRangeDragged); i++)
-	{
-		CGRect		frame;
-		
-		// Get frame from card-view touched - adjust position.
-		frame = [[self cardViewForCardIndex: i] frame];
-		frame = [self convertRect: frame toView: [self superview]];
-		
-		// Sanity check.
-		if ([_draggedCardViews count] > (i - _cardRangeDragged.location))
+
+	// Pick first card as representational of stack (for delegate calls below).
+	if (_cardRangeDragged.length > 0)
+		card = [_stack cardAtIndex: _cardRangeDragged.location];
+
+	[UIView animateWithDuration: kCardMoveAnimationSeconds animations: ^{
+		// Loop over dragged cards - return to original location.
+		for (NSUInteger i = self->_cardRangeDragged.location; i < NSMaxRange (self->_cardRangeDragged); i++)
 		{
-			[[_draggedCardViews objectAtIndex: i - _cardRangeDragged.location] setFrame: frame];
+			CGRect	frame;
+
+			frame = [[self cardViewForCardIndex: i] frame];
+			frame = [self convertRect: frame toView: [self superview]];
+
+			if ([self->_draggedCardViews count] > (i - self->_cardRangeDragged.location))
+			{
+				[[self->_draggedCardViews objectAtIndex: i - self->_cardRangeDragged.location] setFrame: frame];
+			}
+			else
+			{
+				printf ("returnDraggedCardsWithAnimation - error, card index out range\n");
+			}
 		}
-		else
+	} completion: ^(BOOL finished) {
+		NSUInteger	i;
+		CECard		*completionCard = nil;
+		CETableView	*table;
+
+		// Destroy dragged cards.
+		[self destroyDraggedCardViews];
+
+		// Reveal previously hidden cards.
+		for (i = self->_cardRangeDragged.location; i < NSMaxRange (self->_cardRangeDragged); i++)
 		{
-			printf ("returnDraggedCardsWithAnimation - error, card index out range\n");
+			[[self cardViewForCardIndex: i] setHidden: NO];
+
+			if (completionCard == nil)
+				completionCard = [self->_stack cardAtIndex: i];
 		}
-		
-		// Pick first card as representational of stack (see delegate call below).
-		if (card == nil)
-			card = [_stack cardAtIndex: i];
-	}
-	
-	[UIView commitAnimations];
-	
+
+		// Card dragging complete.
+		self->_cardRangeDragged = NSMakeRange (0, 0);
+
+		// Un-highlight.
+		if (self->_highlightedStack)
+		{
+			[self->_highlightedStack setHighlight: NO];
+			self->_highlightedStack = nil;
+		}
+
+		// Call delegate animation completion routine.
+		if ((self->_delegate) && ([self->_delegate respondsToSelector: @selector (stackView:finishedAnimatingCardMove:)]))
+			[self->_delegate stackView: self finishedAnimatingCardMove: completionCard];
+
+		// The enclosing card table keeps track of the animation count.
+		table = [self enclosingCETableView];
+		if (table)
+			[table stackView: self finishedAnimatingCardMove: completionCard];
+
+		// Animation complete.
+		self->_animationRefCount -= 1;
+	}];
+
 	// Call delegate animation begin routine.
 	if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:beginAnimatingCardMove:)]))
 		[_delegate stackView: self beginAnimatingCardMove: card];
-	
+
 	// The enclosing card table keeps track of the animation count.
 	cardTable = [self enclosingCETableView];
 	if (cardTable)
 		[cardTable stackView: self beginAnimatingCardMove: card];
-}
-
-// ------------------------------------------------------------------------------- draggedCardsReturned:finished:context
-
-- (void) draggedCardsReturned: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context
-{
-	NSUInteger	i;
-	CECard		*card = nil;
-	CETableView	*cardTable;
-	
-	// Destroy dragged cards.
-	[self destroyDraggedCardViews];
-	
-	// Reveal previously hidden cards.
-	for (i = _cardRangeDragged.location; i < NSMaxRange (_cardRangeDragged); i++)
-	{
-		[[self cardViewForCardIndex: i] setHidden: NO];
-		
-		// Pick first card as representational of stack (see delegate call below).
-		if (card == nil)
-			card = [_stack cardAtIndex: i];
-	}
-	
-	// Card dragging complete.
-	_cardRangeDragged = NSMakeRange (0, 0);
-	
-	// Un-highlight.
-	if (_highlightedStack)
-	{
-		[_highlightedStack setHighlight: NO];
-		_highlightedStack = nil;
-	}
-	
-	// Call delegate animation completion routine.
-	if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:finishedAnimatingCardMove:)]))
-		[_delegate stackView: self finishedAnimatingCardMove: card];
-	
-	// The enclosing card table keeps track of the animation count.
-	cardTable = [self enclosingCETableView];
-	if (cardTable)
-		[cardTable stackView: self finishedAnimatingCardMove: card];
-	
-	// Animation complete.
-	_animationRefCount -= 1;
 }
 
 // --------------------------------------------------------------------------------------------- destroyDraggedCardViews
@@ -1577,7 +1529,7 @@ bail:
 	else if (abs(dragDelta.x) > (abs(dragDelta.y) + 2.))
 		gesture = kDragGestureMoving;
 #else
-	int			gesture;
+	int			gesture = kDragGestureNone;
 	CGPoint		location;
 	CGPoint		dragDelta;
 	
@@ -1591,7 +1543,7 @@ bail:
 	{
 		gesture = kDragGestureMoving;
 	}
-	else if (abs(dragDelta.x) > (abs(dragDelta.y) + 2.0))
+	else if (fabs(dragDelta.x) > (fabs(dragDelta.y) + 2.0))
 	{
 		gesture = kDragGestureRevealing;
 	}
@@ -1675,9 +1627,6 @@ bail:
 	
 	// Pass the whole dictionary to the undo manager.
 	[[CETableView sharedCardUndoManager] registerUndoWithTarget: stack selector: @selector (undoDealCard:) object: dictionary];
-	
-	// Clean up.
-	[dictionary release];
 }
 
 // ------------------------------------------------------------------------------------------- registerFlipCard:duration
@@ -1696,9 +1645,6 @@ bail:
 	
 	// Pass the whole dictionary to the undo manager.
 	[[CETableView sharedCardUndoManager] registerUndoWithTarget: self selector: @selector (undoFlipCard:) object: dictionary];
-	
-	// Clean up.
-	[dictionary release];
 }
 
 // -------------------------------------------------------------------------------------------------------- undoDealCard
@@ -1820,12 +1766,12 @@ bail:
 		NSUInteger	cardIndex;
 		
 		// Sanity check (not needed I think).
-		require (_stack, bail);
-		require ([_stack numberOfCards] > 0, bail);
+		__Require (_stack, bail);
+		__Require ([_stack numberOfCards] > 0, bail);
 		
 		// Get card index for touch location.
 		cardIndex = [self cardIndexToRevealAtLocation: [touch locationInView: self]];
-		require (cardIndex != NSNotFound, bail);
+		__Require (cardIndex != NSNotFound, bail);
 		
 		// No reveal on top card.  Otherwise, yes.
 		if (cardIndex == ([_stack numberOfCards] - 1))
@@ -1910,13 +1856,13 @@ bail:
 	CECardView	*view = nil;
 	
 	// Param check.
-	require (index != NSNotFound, bail);
+	__Require (index != NSNotFound, bail);
 	
 	// Stacked layout does not have a one-to-one correlation between views and cards.  Special case.
 	if (_layout == kCEStackViewLayoutStacked)
 	{
 		// Sanity check: index ought to correspond to the top card.
-		require ((index + 1) == [_stack numberOfCards], bail);
+		__Require ((index + 1) == [_stack numberOfCards], bail);
 		
 		// Top view is for top card.
 		view = [_cardViews lastObject];
@@ -1924,10 +1870,10 @@ bail:
 	else
 	{
 		// Sanity check: index should be within range.
-		require (index < [_stack numberOfCards], bail);
+		__Require (index < [_stack numberOfCards], bail);
 		
 		// Second sanity check, index should be within range of the card views.
-		require (index < [_cardViews count], bail);
+		__Require (index < [_cardViews count], bail);
 		
 		// Card index and view order are one-to-one.
 		view = [_cardViews objectAtIndex: index];
@@ -1946,7 +1892,7 @@ bail:
 	NSUInteger	count, i;
 	
 	// Param check.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Walk through card views looking for the indicated card.
 	count = [_cardViews count];
@@ -1972,7 +1918,7 @@ bail:
 	CGRect		ourBounds;
 	
 	// Param check.
-	require (count > 0, bail);
+	__Require (count > 0, bail);
 	
 	// Get base card bounds.
 	cardBounds.origin = CGPointMake (0.0, 0.0);
@@ -2182,9 +2128,8 @@ bail:
 		if (!_orderly)
 			cardView.transform = cardView.card.transform;
 		[_cardViews addObject: cardView];
-		[cardView release];
 	}
-	
+
 	// Create the top playing card view.
 	frame = [self boundsForCardAtIndex: count - 1 forCount: count];
 	cardView = [[[self cardViewClass] alloc] initWithFrame: frame];
@@ -2192,11 +2137,10 @@ bail:
 	if (!_orderly)
 		cardView.transform = cardView.card.transform;
 	if (_displaysCount)
-		[cardView setLabel: [NSString stringWithFormat: @"%d", [_stack numberOfCards]]];
+		[cardView setLabel: [NSString stringWithFormat: @"%lu", (unsigned long) [_stack numberOfCards]]];
 	else
 		[cardView setLabel: nil];
 	[_cardViews addObject: cardView];
-	[cardView release];
 	
 	// stack, simple bounding rect.
 	_cardBoundingRect = frame;
@@ -2209,10 +2153,10 @@ bail:
 	NSArray			*cards;
 	NSUInteger		count;
 	NSUInteger		i;
-	
+
 	// Reset card bounding box.
 	_cardBoundingRect = CGRectZero;
-	
+
 	// Walk through cards in stack, create a card view, position, and add as subview.
 	cards = [_stack cardsExcludingPromised];
 	count = [cards count];
@@ -2220,15 +2164,14 @@ bail:
 	{
 		CGRect		frame;
 		CECardView	*cardView;
-		
+
 		frame = [self boundsForCardAtIndex: i forCount: count];
 		cardView = [[[self cardViewClass] alloc] initWithFrame: frame];
 		[cardView setCard: [cards objectAtIndex: i]];
 		if (!_orderly)
 			cardView.transform = cardView.card.transform;
 		[_cardViews addObject: cardView];
-		[cardView release];
-		
+
 		// Get the union of all card bounds.
 		_cardBoundingRect = CGRectUnion (_cardBoundingRect, frame);
 	}
@@ -2241,10 +2184,10 @@ bail:
 	NSArray			*cards;
 	NSUInteger		count;
 	NSUInteger		i;
-	
+
 	// Reset card bounding box.
 	_cardBoundingRect = CGRectZero;
-	
+
 	// Walk through cards in stack, create a card view, position, and add as subview.
 	cards = [_stack cardsExcludingPromised];
 	count = [cards count];
@@ -2252,15 +2195,14 @@ bail:
 	{
 		CGRect		frame;
 		CECardView	*cardView;
-		
+
 		frame = [self boundsForCardAtIndex: i forCount: count];
 		cardView = [[[self cardViewClass] alloc] initWithFrame: frame];
 		[cardView setCard: [cards objectAtIndex: i]];
 		if (!_orderly)
 			cardView.transform = cardView.card.transform;
 		[_cardViews addObject: cardView];
-		[cardView release];
-		
+
 		// Get the union of all card bounds.
 		_cardBoundingRect = CGRectUnion (_cardBoundingRect, frame);
 	}
@@ -2328,8 +2270,7 @@ bail:
 			[tempView setCard: tempCard];
 			if (!_orderly)
 				tempView.transform = tempCard.transform;
-			[tempCard release];
-			
+
 			// Set card image for view.
 			UIGraphicsBeginImageContext (frame.size);
 			if (cardIsFaceUp)
@@ -2387,23 +2328,19 @@ bail:
 			}
 			
 			[dictionary setObject: imageView forKey: @"view"];
-			
+
 			// Set animation curve.
 			[dictionary setObject: [NSNumber numberWithInt: UIViewAnimationCurveEaseIn] forKey: @"curve"];
-			
-			// Done with temporary views.
-			[tempView release];
-			[imageView release];
-			
+
 			// Call delegate animation begin routine.
 			if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:beginAnimatingCardMove:)]))
 				[_delegate stackView: self beginAnimatingCardMove: card];
-			
+
 			// The enclosing card table keeps track of the animation count.
 			cardTable = [self enclosingCETableView];
 			if (cardTable)
 				[cardTable stackView: self beginAnimatingCardMove: card];
-			
+
 			// Animate.
 			[self animateWithDictionary: dictionary];
 		}
@@ -2415,7 +2352,7 @@ bail:
 			BOOL			willFlip;
 			CGPoint			wayPt;
 			NSTimeInterval	totalDuration;
-			
+
 			// Indicate stage 2.
 			[dictionary setObject: [NSNumber numberWithInt: 2] forKey: @"stage"];
 			
@@ -2535,8 +2472,7 @@ bail:
 			// Flip and add card to destination stack.
 			[card setFaceUp: faceUp];
 			[destStack promiseKeptForCard: card];
-			[card release];
-			
+
 			// Call delegate animation completion routine.
 			if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:finishedAnimatingCardMove:)]))
 				[_delegate stackView: self finishedAnimatingCardMove: card];
@@ -2551,11 +2487,8 @@ bail:
 				[cardTable stackView: self finishedAnimatingCardMove: card];
 			
 			// Notify observers that the card animating has landed.
-			[[NSNotificationCenter defaultCenter] postNotificationName: StackViewCardReleasedNotification 
+			[[NSNotificationCenter defaultCenter] postNotificationName: StackViewCardReleasedNotification
 					object: self userInfo: nil];
-			
-			// Done.
-			[dictionary autorelease];
 		}
 	}
 	else if ([[dictionary objectForKey: @"type"] isEqualToString: @"flipCard"])
@@ -2605,8 +2538,7 @@ bail:
 			[tempView setCard: tempCard];
 			if (!_orderly)
 				tempView.transform = tempCard.transform;
-			[tempCard release];
-			
+
 			// Create an image for the card.
 			UIGraphicsBeginImageContext (frame.size);
 			if (cardIsFaceUp)
@@ -2645,11 +2577,7 @@ bail:
 			
 			// Set animation curve.
 			[dictionary setObject: [NSNumber numberWithInt: UIViewAnimationCurveEaseIn] forKey: @"curve"];
-			
-			// Done with temporary views.
-			[tempView release];
-			[imageView release];
-			
+
 			// Call delegate animation begin routine.
 			if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:beginAnimatingCardFlip:)]))
 				[_delegate stackView: self beginAnimatingCardFlip: card];
@@ -2725,9 +2653,6 @@ bail:
 			cardTable = [self enclosingCETableView];
 			if (cardTable)
 				[cardTable stackView: self finishedAnimatingCardFlip: card];
-			
-			// Done.
-			[dictionary autorelease];
 		}
 	}
 }
@@ -2736,51 +2661,40 @@ bail:
 
 - (void) animateWithDictionary: (NSDictionary *) dictionary
 {
-	UIView		*view;
-	NSNumber	*number;
-	NSValue		*value;
-	
+	UIView					*view;
+	NSNumber				*number;
+	NSTimeInterval			duration = 0.2;
+	UIViewAnimationOptions	options = 0;
+
 	// Indicate an animation is in progress.
 	_animationRefCount += 1;
-	
+
 	view = [dictionary objectForKey: @"view"];
-	
-	// Set up animation using the dictionary passed in as a reference.
-	[UIView beginAnimations: nil context: dictionary];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	
+
 	// Duration.
 	number = [dictionary objectForKey: @"duration"];
 	if (number)
-		[UIView setAnimationDuration: [number doubleValue]];
-	
+		duration = [number doubleValue];
+
 	// Animation curve.
 	number = [dictionary objectForKey: @"curve"];
 	if (number)
-		[UIView setAnimationCurve: [number intValue]];
-	
-	// Transform.
-	value = [dictionary objectForKey: @"transform"];
-	if (value)
-		[view setTransform: [value CGAffineTransformValue]];
+		options = (UIViewAnimationOptions) ([number integerValue] << 16);
 
-	value = [dictionary objectForKey: @"wayPt"];
-	if (value)
-		[view setCenter: [value CGPointValue]];
-	
-	[UIView commitAnimations];
-}
+	[UIView animateWithDuration: duration delay: 0 options: options animations: ^{
+		NSValue	*value;
 
-// ----------------------------------------------------------------------------------- animationDidStop:finished:context
+		value = [dictionary objectForKey: @"transform"];
+		if (value)
+			[view setTransform: [value CGAffineTransformValue]];
 
-- (void) animationStopped: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context
-{
-	// Clear animation flag.
-	_animationRefCount -= 1;
-	
-	// Call handle animation again.
-	[self handleAnimation: (NSMutableDictionary *) context];
+		value = [dictionary objectForKey: @"wayPt"];
+		if (value)
+			[view setCenter: [value CGPointValue]];
+	} completion: ^(BOOL finished) {
+		self->_animationRefCount -= 1;
+		[self handleAnimation: (NSMutableDictionary *) dictionary];
+	}];
 }
 
 #pragma mark ------ notifications
