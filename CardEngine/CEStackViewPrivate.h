@@ -24,7 +24,6 @@
 - (void) createDraggedCardViews: (CGPoint) offset;
 - (void) dragDraggedCardViews: (CGPoint) offset;
 - (void) returnDraggedCardsWithAnimation;
-- (void) draggedCardsReturned: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context;
 - (void) destroyDraggedCardViews;
 
 - (void) beginCardDrag: (UITouch *) touch;
@@ -54,6 +53,5 @@
 // ------ animation
 - (void) handleAnimation: (NSMutableDictionary *) dictionary;
 - (void) animateWithDictionary: (NSDictionary *) dictionary;
-- (void) animationStopped: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context;
 
 @end

@@ -1299,96 +1299,82 @@ bail:
 
 - (void) returnDraggedCardsWithAnimation
 {
-	NSUInteger	i;
 	CECard		*card = nil;
 	CETableView	*cardTable;
-	
+
 	// Indicate an animation is in progress.
 	_animationRefCount += 1;
-	
-	[UIView beginAnimations: nil context: nil];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (draggedCardsReturned:finished:context:)];
-	[UIView setAnimationDuration: kCardMoveAnimationSeconds];
-	
-	// Loop over dragged cards - return to original location.
-	for (i = _cardRangeDragged.location; i < NSMaxRange (_cardRangeDragged); i++)
-	{
-		CGRect		frame;
-		
-		// Get frame from card-view touched - adjust position.
-		frame = [[self cardViewForCardIndex: i] frame];
-		frame = [self convertRect: frame toView: [self superview]];
-		
-		// Sanity check.
-		if ([_draggedCardViews count] > (i - _cardRangeDragged.location))
+
+	// Pick first card as representational of stack (for delegate calls below).
+	if (_cardRangeDragged.length > 0)
+		card = [_stack cardAtIndex: _cardRangeDragged.location];
+
+	[UIView animateWithDuration: kCardMoveAnimationSeconds animations: ^{
+		// Loop over dragged cards - return to original location.
+		for (NSUInteger i = self->_cardRangeDragged.location; i < NSMaxRange (self->_cardRangeDragged); i++)
 		{
-			[[_draggedCardViews objectAtIndex: i - _cardRangeDragged.location] setFrame: frame];
+			CGRect	frame;
+
+			frame = [[self cardViewForCardIndex: i] frame];
+			frame = [self convertRect: frame toView: [self superview]];
+
+			if ([self->_draggedCardViews count] > (i - self->_cardRangeDragged.location))
+			{
+				[[self->_draggedCardViews objectAtIndex: i - self->_cardRangeDragged.location] setFrame: frame];
+			}
+			else
+			{
+				printf ("returnDraggedCardsWithAnimation - error, card index out range\n");
+			}
 		}
-		else
+	} completion: ^(BOOL finished) {
+		NSUInteger	i;
+		CECard		*completionCard = nil;
+		CETableView	*table;
+
+		// Destroy dragged cards.
+		[self destroyDraggedCardViews];
+
+		// Reveal previously hidden cards.
+		for (i = self->_cardRangeDragged.location; i < NSMaxRange (self->_cardRangeDragged); i++)
 		{
-			printf ("returnDraggedCardsWithAnimation - error, card index out range\n");
+			[[self cardViewForCardIndex: i] setHidden: NO];
+
+			if (completionCard == nil)
+				completionCard = [self->_stack cardAtIndex: i];
 		}
-		
-		// Pick first card as representational of stack (see delegate call below).
-		if (card == nil)
-			card = [_stack cardAtIndex: i];
-	}
-	
-	[UIView commitAnimations];
-	
+
+		// Card dragging complete.
+		self->_cardRangeDragged = NSMakeRange (0, 0);
+
+		// Un-highlight.
+		if (self->_highlightedStack)
+		{
+			[self->_highlightedStack setHighlight: NO];
+			self->_highlightedStack = nil;
+		}
+
+		// Call delegate animation completion routine.
+		if ((self->_delegate) && ([self->_delegate respondsToSelector: @selector (stackView:finishedAnimatingCardMove:)]))
+			[self->_delegate stackView: self finishedAnimatingCardMove: completionCard];
+
+		// The enclosing card table keeps track of the animation count.
+		table = [self enclosingCETableView];
+		if (table)
+			[table stackView: self finishedAnimatingCardMove: completionCard];
+
+		// Animation complete.
+		self->_animationRefCount -= 1;
+	}];
+
 	// Call delegate animation begin routine.
 	if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:beginAnimatingCardMove:)]))
 		[_delegate stackView: self beginAnimatingCardMove: card];
-	
+
 	// The enclosing card table keeps track of the animation count.
 	cardTable = [self enclosingCETableView];
 	if (cardTable)
 		[cardTable stackView: self beginAnimatingCardMove: card];
-}
-
-// ------------------------------------------------------------------------------- draggedCardsReturned:finished:context
-
-- (void) draggedCardsReturned: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context
-{
-	NSUInteger	i;
-	CECard		*card = nil;
-	CETableView	*cardTable;
-	
-	// Destroy dragged cards.
-	[self destroyDraggedCardViews];
-	
-	// Reveal previously hidden cards.
-	for (i = _cardRangeDragged.location; i < NSMaxRange (_cardRangeDragged); i++)
-	{
-		[[self cardViewForCardIndex: i] setHidden: NO];
-		
-		// Pick first card as representational of stack (see delegate call below).
-		if (card == nil)
-			card = [_stack cardAtIndex: i];
-	}
-	
-	// Card dragging complete.
-	_cardRangeDragged = NSMakeRange (0, 0);
-	
-	// Un-highlight.
-	if (_highlightedStack)
-	{
-		[_highlightedStack setHighlight: NO];
-		_highlightedStack = nil;
-	}
-	
-	// Call delegate animation completion routine.
-	if ((_delegate) && ([_delegate respondsToSelector: @selector (stackView:finishedAnimatingCardMove:)]))
-		[_delegate stackView: self finishedAnimatingCardMove: card];
-	
-	// The enclosing card table keeps track of the animation count.
-	cardTable = [self enclosingCETableView];
-	if (cardTable)
-		[cardTable stackView: self finishedAnimatingCardMove: card];
-	
-	// Animation complete.
-	_animationRefCount -= 1;
 }
 
 // --------------------------------------------------------------------------------------------- destroyDraggedCardViews
@@ -2684,51 +2670,40 @@ bail:
 
 - (void) animateWithDictionary: (NSDictionary *) dictionary
 {
-	UIView		*view;
-	NSNumber	*number;
-	NSValue		*value;
-	
+	UIView					*view;
+	NSNumber				*number;
+	NSTimeInterval			duration = 0.2;
+	UIViewAnimationOptions	options = 0;
+
 	// Indicate an animation is in progress.
 	_animationRefCount += 1;
-	
+
 	view = [dictionary objectForKey: @"view"];
-	
-	// Set up animation using the dictionary passed in as a reference.
-	[UIView beginAnimations: nil context: (__bridge_retained void *) dictionary];
-	[UIView setAnimationDelegate: self];
-	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
-	
+
 	// Duration.
 	number = [dictionary objectForKey: @"duration"];
 	if (number)
-		[UIView setAnimationDuration: [number doubleValue]];
-	
+		duration = [number doubleValue];
+
 	// Animation curve.
 	number = [dictionary objectForKey: @"curve"];
 	if (number)
-		[UIView setAnimationCurve: [number intValue]];
-	
-	// Transform.
-	value = [dictionary objectForKey: @"transform"];
-	if (value)
-		[view setTransform: [value CGAffineTransformValue]];
+		options = (UIViewAnimationOptions) ([number integerValue] << 16);
 
-	value = [dictionary objectForKey: @"wayPt"];
-	if (value)
-		[view setCenter: [value CGPointValue]];
-	
-	[UIView commitAnimations];
-}
+	[UIView animateWithDuration: duration delay: 0 options: options animations: ^{
+		NSValue	*value;
 
-// ----------------------------------------------------------------------------------- animationDidStop:finished:context
+		value = [dictionary objectForKey: @"transform"];
+		if (value)
+			[view setTransform: [value CGAffineTransformValue]];
 
-- (void) animationStopped: (NSString *) animationID finished: (NSNumber *) finished context: (void *) context
-{
-	// Clear animation flag.
-	_animationRefCount -= 1;
-	
-	// Call handle animation again.
-	[self handleAnimation: (__bridge_transfer NSMutableDictionary *) context];
+		value = [dictionary objectForKey: @"wayPt"];
+		if (value)
+			[view setCenter: [value CGPointValue]];
+	} completion: ^(BOOL finished) {
+		self->_animationRefCount -= 1;
+		[self handleAnimation: (NSMutableDictionary *) dictionary];
+	}];
 }
 
 #pragma mark ------ notifications
