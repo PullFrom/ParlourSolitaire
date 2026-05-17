@@ -124,18 +124,6 @@ bail:
 	return myself;
 }
 
-// ------------------------------------------------------------------------------------------------------------- dealloc
-
-- (void) dealloc
-{
-	// Release instance variables.
-	[_portraitImagePath release];
-	[_landscapeImagePath release];
-	
-	// Super.
-	[super dealloc];
-}
-
 // -------------------------------------------------------------------------------------------------------- drawGradient
 
 - (void) drawGradient

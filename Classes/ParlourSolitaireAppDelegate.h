@@ -15,8 +15,8 @@
 	ParlourSolitaireViewController	*_viewController;
 }
 
-@property (nonatomic, retain) IBOutlet UIWindow							*_window;
-@property (nonatomic, retain) IBOutlet ParlourSolitaireViewController	*_viewController;
+@property (nonatomic, strong) IBOutlet UIWindow							*_window;
+@property (nonatomic, strong) IBOutlet ParlourSolitaireViewController	*_viewController;
 
 @end
 

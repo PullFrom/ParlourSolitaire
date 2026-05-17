@@ -104,18 +104,6 @@ bail:
 	return self;
 }
 
-// ------------------------------------------------------------------------------------------------------------- dealloc
-
-- (void) dealloc
-{
-	// Release instance var.
-	[_card release];
-	[_highlightColor release];
-	
-	// Super.
-	[super dealloc];
-}
-
 // ------------------------------------------------------------------------------------------------------------ isOpaque
 
 - (BOOL) isOpaque
@@ -131,11 +119,9 @@ bail:
 	// NOP.
 	if (_card == card)
 		return;
-	
-	// Release, retain, redraw.
-	[_card release];
-	_card = [card retain];
-	
+
+	_card = card;
+
 	[self setNeedsDisplay];
 }
 
@@ -154,11 +140,9 @@ bail:
 	// NOP.
 	if (label == _label)
 		return;
-	
-	// Release, retain, assign.
-	[_label release];
-	_label = [label retain];
-	
+
+	_label = label;
+
 	// Redraw.
 	[self setNeedsDisplay];
 }

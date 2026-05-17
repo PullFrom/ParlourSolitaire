@@ -30,9 +30,9 @@ enum
 	BOOL			_hasShadow;						// Shadow state.
 }
 
-@property(nonatomic,retain)	CECard		*card;				// The card object backing the view. This is the card displayed.
-@property(nonatomic,retain)	UIColor		*highlightColor;	// Fill color when view is highlighted. Can be set to nil.
-@property(nonatomic,retain)	NSString	*label;				// Fill color when view is highlighted. Can be set to nil.
+@property(nonatomic,strong)	CECard		*card;				// The card object backing the view. This is the card displayed.
+@property(nonatomic,strong)	UIColor		*highlightColor;	// Fill color when view is highlighted. Can be set to nil.
+@property(nonatomic,strong)	NSString	*label;				// Fill color when view is highlighted. Can be set to nil.
 @property(nonatomic)		BOOL		highlight;			// During live drag, view may highlight when stack dragged into.
 @property(nonatomic)		BOOL		hasShadow;			// Whether to draw a shadow beneath card. Default is NO.
 

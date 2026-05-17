@@ -8,13 +8,9 @@
 
 
 int main (int argc, char *argv[])
-{    
-    NSAutoreleasePool	*pool;
-	int					retVal;
-	
-	pool = [[NSAutoreleasePool alloc] init];
-    retVal = UIApplicationMain (argc, argv, nil, nil);
-    [pool release];
-	
-    return retVal;
+{
+	@autoreleasepool
+	{
+		return UIApplicationMain (argc, argv, nil, nil);
+	}
 }

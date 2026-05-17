@@ -825,7 +825,6 @@ done:
 				otherButtonTitles: NSLocalizedStringFromTable (@"New Game", @"Localizable", nil), nil];
 		alert.tag = kResetTableAlertTag;
 		[alert show];
-		[alert release];
 	}
 }
 
@@ -889,7 +888,6 @@ done:
 				cancelButtonTitle: UNDO_CANCEL_BUTTON otherButtonTitles: UNDO_ALL_BUTTON, nil];
 		alert.tag = kUndoAllAlertTag;
 		[alert show];
-		[alert release];
 	}
 }
 
@@ -1240,7 +1238,7 @@ done:
 	[_infoView addSubview: _aboutView];
 	
 	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: _aboutView];
+	[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _aboutView];
 	[UIView setAnimationDelegate: self];
 	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
 	_aboutView.alpha = 1.0;
@@ -1417,7 +1415,7 @@ done:
 		_gamesWonPercentageLabel.text = [NSString stringWithFormat: @"%d%%", (gamesWon * 100) / gamesPlayed];
 	
 	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: _settingsView];
+	[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _settingsView];
 	[UIView setAnimationDelegate: self];
 	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
 	_settingsView.alpha = 1.0;
@@ -1437,7 +1435,7 @@ done:
 	[_infoView addSubview: _rulesView];
 	
 	// Animate-out the view sliding out while the dark view becomes clear again.
-	[UIView beginAnimations: @"FadeOutInfoSubview" context: _rulesView];
+	[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _rulesView];
 	[UIView setAnimationDelegate: self];
 	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
 	_rulesView.alpha = 1.0;
@@ -1530,7 +1528,6 @@ done:
 				otherButtonTitles: NSLocalizedStringFromTable (@"OK", @"Localizable", nil), nil];
 		alert.tag = kCardsToDealAlertTag;
 		[alert show];
-		[alert release];
 	}
 }
 
@@ -1670,7 +1667,7 @@ done:
 		[self updateLocalStatisticsInterface];
 		
 		// Animate-out the view sliding out while the dark view becomes clear again.
-		[UIView beginAnimations: @"FadeOutInfoSubview" context: _gameOverView];
+		[UIView beginAnimations: @"FadeOutInfoSubview" context: (__bridge void *) _gameOverView];
 		[UIView setAnimationDelegate: self];
 		[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
 		_gameOverView.alpha = 1.0;
@@ -1779,7 +1776,7 @@ done:
 	else if ([animationID isEqualToString: @"FadeOutInfoSubview"])
 	{
 		[_currentInfoView removeFromSuperview];
-		_currentInfoView = context;
+		_currentInfoView = (__bridge UIView *) context;
 	}
 }
 
@@ -1841,7 +1838,6 @@ done:
 	_dealImageView.frame = frame;
 	_dealImageView.alpha = 0.5;
 	[(CETableView *) self.view addSubview: _dealImageView];
-	[_dealImageView release];
 	
 	// Create stock.
 	_stockView = [[PSStackView alloc] initWithFrame: 
@@ -1856,7 +1852,6 @@ done:
 	[_stockView setArchiveIdentifier: @"Stock"];
 	_stockView.enableUndoGrouping = NO;
 	[(CETableView *) self.view addSubview: _stockView];
-	[_stockView release];
 	
 	// Create waste.
 	_wasteView = [[PSStackView alloc] initWithFrame: 
@@ -1871,7 +1866,6 @@ done:
 	[_wasteView setArchiveIdentifier: @"Waste"];
 	_wasteView.enableUndoGrouping = NO;
 	[(CETableView *) self.view addSubview: _wasteView];
-	[_wasteView release];
 	
 	// Create foundations.
 	for (i = 0; i < 4; i++)
@@ -1899,7 +1893,6 @@ done:
 		[_foundationViews[i] setArchiveIdentifier: [NSString stringWithFormat: @"Foundation%d", i]];
 		_foundationViews[i].enableUndoGrouping = NO;
 		[(CETableView *) self.view addSubview: _foundationViews[i]];
-		[_foundationViews[i] release];
 	}
 	
 	// Create tableau.
@@ -1933,7 +1926,6 @@ done:
 		_tableauViews[i].enableUndoGrouping = NO;
 		[_tableauViews[i] setOrderly: NO];
 		[(CETableView *) self.view addSubview: _tableauViews[i]];
-		[_tableauViews[i] release];
 	}
 	
 	// Layout the buttons.
@@ -2162,9 +2154,9 @@ skipAudio:
 {
 	// Release any retained subviews of the main view.
 	// e.g. self.myOutlet = nil;
-	[_newButton release];
-	[_undoButton release];
-	[_infoButton release];
+	_newButton = nil;
+	_undoButton = nil;
+	_infoButton = nil;
 }
 
 // ------------------------------------------------------------------------------------------------------------- dealloc
@@ -2173,7 +2165,7 @@ skipAudio:
 {
 	// No more observing.
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
-	
+
 	// Clean up timers.
 	if (_computerTaskTimer)
 		[_computerTaskTimer invalidate];
@@ -2181,9 +2173,6 @@ skipAudio:
 	if (_undoHeldTimer)
 		[_undoHeldTimer invalidate];
 	_undoHeldTimer = nil;
-	
-	// Super.
-	[super dealloc];
 }
 
 
@@ -2674,7 +2663,6 @@ done:
 	[_leaderboardPlayerIDs removeAllObjects];
 	[_leaderboardGamesPlayed removeAllObjects];
 	[_leaderboardGamesWon removeAllObjects];
-	[_leaderboardAliases release];
 	_leaderboardAliases = nil;
 	_playerLeaderboardIndex = NSNotFound;
 	
@@ -2777,7 +2765,6 @@ done:
 		}
 		else
 		{
-			[_leaderboardAliases release];
 			_leaderboardAliases = nil;
 			[self updateGlobalScoresInterface];
 		}
@@ -2811,7 +2798,6 @@ done:
 - (void) localPlayer: (LocalPlayer *) player retrievedAliasesForPlayerIDs: (NSArray *) aliases
 {
 	// Toss previous alias array.
-	[_leaderboardAliases release];
 	_leaderboardAliases = nil;
 	if (aliases)
 		_leaderboardAliases = [aliases copy];
