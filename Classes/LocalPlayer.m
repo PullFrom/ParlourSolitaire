@@ -174,7 +174,7 @@ bail:
 		*score = 0;
 	
 	// Param check.
-	require (category, bail);
+	__Require (category, bail);
 	
 	// Get standard user defaults; look for player ID (or 'local') sub-dictionary.
 	defaults = [NSUserDefaults standardUserDefaults];
@@ -211,8 +211,8 @@ bail:
 	BOOL			success = NO;
 	
 	// Param checking.
-	require (count <= 75, bail);
-	require (category, bail);
+	__Require (count <= 75, bail);
+	__Require (category, bail);
 	
 	// We have to have been authenticated and using Game Center.
 	if ((_authenticated == NO) || (_usingGameCenter == NO))
@@ -220,7 +220,7 @@ bail:
 	
 	// Create leaderboard object to request global scores.
 	leaderboardRequest = [[GKLeaderboard alloc] init];
-	require (leaderboardRequest, bail);
+	__Require (leaderboardRequest, bail);
 	
 	// Leaderboard attributes.
 	leaderboardRequest.category = category;
@@ -292,8 +292,8 @@ bail:
 	BOOL			success = NO;
 	
 	// Param checking.
-	require (playerIDs, bail);
-	require (category, bail);
+	__Require (playerIDs, bail);
+	__Require (category, bail);
 	
 	// We have to have been authenticated and using Game Center.
 	if ((_authenticated == NO) || (_usingGameCenter == NO))
@@ -301,7 +301,7 @@ bail:
 	
 	// Create leaderboard object to request global scores.
 	leaderboardRequest = [[GKLeaderboard alloc] initWithPlayerIDs: playerIDs];
-	require (leaderboardRequest, bail);
+	__Require (leaderboardRequest, bail);
 	
 	// Leaderboard attributes.
 	leaderboardRequest.category = category;
@@ -430,7 +430,7 @@ bail:
 	BOOL			success = NO;
 	
 	// Param checking.
-	require (category, bail);
+	__Require (category, bail);
 	
 	// We have to have been authenticated and using Game Center.
 	if ((_authenticated == NO) || (_usingGameCenter == NO))
@@ -438,7 +438,7 @@ bail:
 	
 	// Create leaderboard object to request global scores.
 	leaderboardRequest = [[GKLeaderboard alloc] initWithPlayerIDs: [NSArray arrayWithObject: _playerID]];
-	require (leaderboardRequest, bail);
+	__Require (leaderboardRequest, bail);
 	
 	// Leaderboard attributes.
 	leaderboardRequest.category = category;

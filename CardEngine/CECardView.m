@@ -83,7 +83,7 @@ static CGPDFDocumentRef	gCardPDFDocument = nil;
 	
 	// Super.
 	myself = [super initWithFrame: frame];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 	// Initialize instance variables.
 	_card = nil;
@@ -300,14 +300,14 @@ bail:
 		
 		// Get image URL from bundle.
 		bundle = CFBundleGetMainBundle ();
-		require (bundle, bail);
+		__Require (bundle, bail);
 		
 		base = CFBundleCopyResourcesDirectoryURL (bundle);
-		require (base, bail);
+		__Require (base, bail);
 		
 		url = CFURLCreateWithFileSystemPathRelativeToBase (kCFAllocatorDefault, CFSTR ("Cards.pdf"), 
 				kCFURLPOSIXPathStyle, false, base); 
-		require (url, bail);
+		__Require (url, bail);
 		
 		// Get PDF document.
 		gCardPDFDocument = CGPDFDocumentCreateWithURL (url);
@@ -318,11 +318,11 @@ bail:
 	}
 	
 	// Must have a PDF document by now.
-	require (gCardPDFDocument, bail);
+	__Require (gCardPDFDocument, bail);
 	
 	// Get the page of the PDF that corresponds to our card index.
 	cardPage = CGPDFDocumentGetPage (gCardPDFDocument, [_card index]);
-	require (cardPage, bail);
+	__Require (cardPage, bail);
 	
 	transform = CGPDFPageGetDrawingTransform (cardPage, kCGPDFCropBox, bounds, 0, true);
 	
@@ -365,14 +365,14 @@ bail:
 		
 		// Get image URL from bundle.
 		bundle = CFBundleGetMainBundle ();
-		require (bundle, bail);
+		__Require (bundle, bail);
 		
 		base = CFBundleCopyResourcesDirectoryURL (bundle);
-		require (base, bail);
+		__Require (base, bail);
 		
 		url = CFURLCreateWithFileSystemPathRelativeToBase (kCFAllocatorDefault, CFSTR ("Cards.pdf"), 
 				kCFURLPOSIXPathStyle, false, base); 
-		require (url, bail);
+		__Require (url, bail);
 		
 		// Get PDF document.
 		gCardPDFDocument = CGPDFDocumentCreateWithURL (url);
@@ -383,11 +383,11 @@ bail:
 	}
 	
 	// Must have a PDF document by now.
-	require (gCardPDFDocument, bail);
+	__Require (gCardPDFDocument, bail);
 	
 	// Get the page of the PDF that corresponds to our card index.
 	cardPage = CGPDFDocumentGetPage (gCardPDFDocument, 53);
-	require (cardPage, bail);
+	__Require (cardPage, bail);
 	
 	transform = CGPDFPageGetDrawingTransform (cardPage, kCGPDFCropBox, bounds, 0, true);
 	

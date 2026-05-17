@@ -1975,7 +1975,7 @@ done:
 	// Load sounds.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"Shuffle" ofType: @"wav"]];
 	_shufflePlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_shufflePlayer, skipAudio);
+	__Require (_shufflePlayer, skipAudio);
 	[_shufflePlayer prepareToPlay];
 	
 	// Load "draw card" sounds.
@@ -1983,7 +1983,7 @@ done:
 	{
 		audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: [NSString stringWithFormat: @"CardDraw%d", i] ofType: @"wav"]];
 		_cardDrawPlayers[i] = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-		require (_cardDrawPlayers[i], skipAudio);
+		__Require (_cardDrawPlayers[i], skipAudio);
 		[_cardDrawPlayers[i] prepareToPlay];
 	}
 
@@ -1992,31 +1992,31 @@ done:
 	{
 		audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: [NSString stringWithFormat: @"CardPlace%d", i] ofType: @"wav"]];
 		_cardPlacePlayers[i] = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-		require (_cardPlacePlayers[i], skipAudio);
+		__Require (_cardPlacePlayers[i], skipAudio);
 		[_cardPlacePlayers[i] prepareToPlay];
 	}
 	
 	// Click sounds.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"ClickOpen" ofType: @"wav"]];
 	_clickOpenSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_clickOpenSoundPlayer, skipAudio);
+	__Require (_clickOpenSoundPlayer, skipAudio);
 	[_clickOpenSoundPlayer prepareToPlay];
 	
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"ClickClose" ofType: @"wav"]];
 	_clickCloseSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_clickCloseSoundPlayer, skipAudio);
+	__Require (_clickCloseSoundPlayer, skipAudio);
 	[_clickCloseSoundPlayer prepareToPlay];
 	
 	// Undo sound.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"Blip" ofType: @"wav"]];
 	_undoSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_undoSoundPlayer, skipAudio);
+	__Require (_undoSoundPlayer, skipAudio);
 	[_undoSoundPlayer prepareToPlay];
 
 	// Player won sound.
 	audioURL = [NSURL fileURLWithPath: [[NSBundle mainBundle] pathForResource: @"Babip" ofType: @"wav"]];
 	_winSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL: audioURL error: &error];
-	require (_winSoundPlayer, skipAudio);
+	__Require (_winSoundPlayer, skipAudio);
 	[_winSoundPlayer prepareToPlay];
 	
 skipAudio:

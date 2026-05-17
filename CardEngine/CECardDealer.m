@@ -34,7 +34,7 @@
 	
 	// Super.
 	myself = [super init];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 	// Initialize instance variables.
 	_duration = kDefaultDealAnimationDuration;

@@ -117,7 +117,7 @@ static NSUndoManager	*_gSharedUndoManager = nil;
 	
 	// Super.
 	myself = [super initWithFrame: frame];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 bail:
 	

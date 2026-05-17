@@ -38,7 +38,7 @@ static int32_t gWinRandState = 0;
 	id			deck;
 	
 	deck = [[[CEStack alloc] init] autorelease];
-	require (deck, bail);
+	__Require (deck, bail);
 	
 	// Add deck of cards.
 	for (i = 1; i <= 52; i++)
@@ -64,7 +64,7 @@ bail:
 	
 	// Super.
 	myself = [super init];
-	require (myself, bail);
+	__Require (myself, bail);
 	
 	// Initialize instance variables.
 	_cards = nil;
@@ -110,8 +110,8 @@ bail:
 	CECard	*card = nil;
 	
 	// NOP.
-	require (_cards, bail);
-	require (index < [_cards count], bail);
+	__Require (_cards, bail);
+	__Require (index < [_cards count], bail);
 	
 	// Return the object in our array at index.
 	card = [(CardData *)[_cards objectAtIndex: index] card];
@@ -129,7 +129,7 @@ bail:
 	NSUInteger	index = NSNotFound;
 	
 	// NOP.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Return the index of the object in our array.
 	count = [self numberOfCards];
@@ -155,7 +155,7 @@ bail:
 	BOOL		contains = NO;
 	
 	// Param check.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Is the card in our array?
 	count = [self numberOfCards];
@@ -180,8 +180,8 @@ bail:
 	CECard	*card = nil;
 	
 	// NOP.
-	require (_cards, bail);
-	require ([_cards count] > 0, bail);
+	__Require (_cards, bail);
+	__Require ([_cards count] > 0, bail);
 	
 	// Return the last object in our array.
 	card = [(CardData *)[_cards lastObject] card];
@@ -229,7 +229,7 @@ bail:
 - (void) addCard: (CECard *) card
 {
 	// Param check.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Add the card.
 	[self addCardWithoutNotification: card];
@@ -249,8 +249,8 @@ bail:
 	NSUInteger	i;
 	
 	// Param check.
-	require (stack, bail);
-	require ([stack numberOfCards] >= NSMaxRange (range), bail);
+	__Require (stack, bail);
+	__Require ([stack numberOfCards] >= NSMaxRange (range), bail);
 	
 	// Add the cards one at a time.
 	for (i = range.location; i < NSMaxRange (range); i++)
@@ -271,11 +271,11 @@ bail:
 	NSUInteger		count, i;
 	
 	// Param check.
-	require (stack, bail);
+	__Require (stack, bail);
 	
 	// How many cards are in stack passed in?
 	count = [stack numberOfCards];
-	require_quiet (count > 0, bail);
+	__Require_Quiet (count > 0, bail);
 	
 	// Add the cards one at a time.
 	for (i = 0; i < count; i++)
@@ -302,7 +302,7 @@ bail:
 	CardData	*cardData;
 	
 	// Param check.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Create lazily.
 	if (_cards == nil)
@@ -360,11 +360,11 @@ bail:
 	NSUInteger	count, i;
 	
 	// Param check.
-	require (array, bail);
+	__Require (array, bail);
 	
 	// See if there are any cards here.
 	count = [array count];
-	require_quiet (count > 0, bail);
+	__Require_Quiet (count > 0, bail);
 	
 	// For each card, add an NSNumber representing the value of the card to array.
 	for (i = 0; i < count; i++)
@@ -405,8 +405,8 @@ bail:
 	NSUInteger	index;
 	
 	// Param check.
-	require (card, bail);
-	require (_cards, bail);
+	__Require (card, bail);
+	__Require (_cards, bail);
 	
 	// Skip out if this is not our card.
 	if ([self stackContainsCard: card] == NO)
@@ -414,7 +414,7 @@ bail:
 	
 	// Get index for card we are going to remove.
 	index = [self indexForCard: card];
-	require (index != NSNotFound, bail);
+	__Require (index != NSNotFound, bail);
 	
 	// Remove card data object.
 	[_cards removeObjectAtIndex: index];
@@ -431,8 +431,8 @@ bail:
 
 - (void) removeCardsInRange: (NSRange) range
 {
-	require (_cards, bail);
-	require (NSMaxRange (range) <= [_cards count], bail);
+	__Require (_cards, bail);
+	__Require (NSMaxRange (range) <= [_cards count], bail);
 	
 	// Remove the card data objects.
 	[_cards removeObjectsInRange: range];
@@ -450,8 +450,8 @@ bail:
 - (void) removeAllCards
 {
 	// Param check.
-	require (_cards, bail);
-	require ([_cards count] > 0, bail);
+	__Require (_cards, bail);
+	__Require ([_cards count] > 0, bail);
 	
 	// Remove all cards (empty the array).
 	[_cards removeAllObjects];
@@ -470,8 +470,8 @@ bail:
 - (void) flipCard: (CECard *) card faceUp: (BOOL) faceUpOrDown
 {
 	// Param check.
-	require (card, bail);
-	require (_cards, bail);
+	__Require (card, bail);
+	__Require (_cards, bail);
 	
 	// Skip out if this is not our card.
 	if ([self stackContainsCard: card] == NO)
@@ -502,11 +502,11 @@ bail:
 	BOOL		flippedACard = NO;
 	
 	// Param check.
-	require (_cards, bail);
+	__Require (_cards, bail);
 	
 	// How many cards?
 	count = [_cards count];
-	require (count > 0, bail);
+	__Require (count > 0, bail);
 	
 	// Set face up.
 	for (i = 0; i < count; i++)
@@ -568,7 +568,7 @@ bail:
 	NSUInteger	count, i;
 	
 	// NOP.
-	require (_cards, bail);
+	__Require (_cards, bail);
 	
 	// Seed the psuedo-random number generator.
 	_seedUsed = seed;
@@ -576,7 +576,7 @@ bail:
 	
 	// Swap each card with a random card.
 	count = [_cards count];
-	require (count > 1, bail);
+	__Require (count > 1, bail);
 	
 	// New shuffle algorithm: Fisher and Yates (also called the Knuth Shuffle).
 	for (i = count - 1; i > 0; i--)
@@ -617,14 +617,14 @@ bail:
 	CEStack		*tempDeck;
 	
 	// NOP.
-	require (_cards, bail);
+	__Require (_cards, bail);
 	
 	// Swap each card with a random card.
 	count = [_cards count];
 	wLeft = count;
 	
 	// A current restriction is that the stack has exactly 52 cards.
-	require (count == 52, bail);
+	__Require (count == 52, bail);
 	
 	// Random seed.
 	winSRand (seed);
@@ -668,7 +668,7 @@ bail:
 	CardData	*cardData;
 	
 	// Param check.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Create lazily.
 	if (_cards == nil)
@@ -692,7 +692,7 @@ bail:
 	CardData	*cardData;
 	
 	// Param check.
-	require (card, bail);
+	__Require (card, bail);
 	
 	// Create lazily.
 	if (_cards == nil)
@@ -720,7 +720,7 @@ bail:
 	
 	// Get the card index.
 	index = [self indexForCard: card];
-	require (index != NSNotFound, bail);
+	__Require (index != NSNotFound, bail);
 	
 	// Clear promised flag.
 	[[_cards objectAtIndex: index] setPromised: NO];
