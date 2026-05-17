@@ -101,8 +101,8 @@ enum
 	CGRect	mainBounds;
 	CGRect	buttonFrame;
 	CGRect	frame;
-	
-	mainBounds = [[UIScreen mainScreen] bounds];
+
+	mainBounds = self.view.bounds;
 	
 	if (UIInterfaceOrientationIsPortrait (orientation))
 	{
@@ -206,17 +206,17 @@ enum
 		_infoButton.frame = buttonFrame;
 		[_infoButton setImage: [UIImage imageNamed: @"InfoSelectedL"] forState: UIControlStateHighlighted];
 		
-		_darkView.frame = CGRectMake (0.0, 0.0, mainBounds.size.height, mainBounds.size.width);
-		
+		_darkView.frame = CGRectMake (0.0, 0.0, mainBounds.size.width, mainBounds.size.height);
+
 		if (_infoView)
 		{
 			CGRect	frame;
-			
+
 			frame = _infoView.frame;
 			if (_infoViewIsOpen)
-				frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width - frame.size.height);
+				frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
 			else
-				frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+				frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 			_infoView.frame = frame;
 		}
 	}
@@ -1161,7 +1161,6 @@ done:
 - (void) info: (id) sender
 {
 	CGRect		mainBounds;
-	BOOL		portrait;
 	CGRect		frame;
 	
 	if (_playSounds)
@@ -1185,9 +1184,8 @@ done:
 	}
 	
 	// Get main bounds and orientation.
-	mainBounds = [[UIScreen mainScreen] bounds];
-	portrait = UIInterfaceOrientationIsPortrait ([UIApplication sharedApplication].statusBarOrientation);
-	
+	mainBounds = self.view.bounds;
+
 	// Create dark view to obscure card table. Initially it has a clear background.
 	// Add as subview to card table.
 	if (_infoView == nil)
@@ -1197,31 +1195,25 @@ done:
 		_infoView = [[UIImageView alloc] initWithImage: [UIImage imageNamed: @"PaperTablet"]];
 		_infoView.userInteractionEnabled = YES;
 		frame = _infoView.frame;
-		if (portrait)
-			frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-		else
-			frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 		_infoView.frame = frame;
 		[_darkView addSubview: _infoView];
 	}
-	
+
 	// Initially begin with "about view" being displayed.
 	_aboutView.alpha = 1.0;
 	[_infoView addSubview: _aboutView];
 	_currentInfoView = _aboutView;
-	
+
 	// Capture touch events.
 	_darkView.userInteractionEnabled = YES;
-	
+
 	// Animate-in the view sliding in while the dark view becomes darker.
 	[UIView beginAnimations: @"SlideInInfoView" context: nil];
 	[UIView setAnimationDuration: 0.5];
 	_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
 	frame = _infoView.frame;
-	if (portrait)
-		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
-	else
-		frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width - frame.size.height);
+	frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
 	_infoView.frame = frame;
 	[UIView commitAnimations];
 }
@@ -1448,15 +1440,17 @@ done:
 - (void) closeInfo: (id) sender
 {
 	CGRect		mainBounds;
-	BOOL		portrait;
 	CGRect		frame;
-	
+
 	if (_playSounds)
 		[_clickCloseSoundPlayer play];
-	
-	mainBounds = [[UIScreen mainScreen] bounds];
-	portrait = UIInterfaceOrientationIsPortrait ([UIApplication sharedApplication].statusBarOrientation);
-	
+
+	// Disable touch capture immediately, so buttons underneath remain responsive
+	// even if the animation is disrupted by rotation.
+	_darkView.userInteractionEnabled = NO;
+
+	mainBounds = self.view.bounds;
+
 	// Animate-out the view sliding out while the dark view becomes clear again.
 	[UIView beginAnimations: @"SlideOutInfoView" context: nil];
 	[UIView setAnimationDuration: 0.5];
@@ -1464,10 +1458,7 @@ done:
 	[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
 	_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.0];
 	frame = _infoView.frame;
-	if (portrait)
-		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-	else
-		frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+	frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 	_infoView.frame = frame;
 	[UIView commitAnimations];
 	
@@ -1677,15 +1668,13 @@ done:
 	else
 	{
 		CGRect		mainBounds;
-		BOOL		portrait;
 		CGRect		frame;
-		
+
 		_infoViewIsOpen = YES;
-		
+
 		// Get main bounds and orientation.
-		mainBounds = [[UIScreen mainScreen] bounds];
-		portrait = UIInterfaceOrientationIsPortrait ([UIApplication sharedApplication].statusBarOrientation);
-		
+		mainBounds = self.view.bounds;
+
 		// Create dark view to obscure card table. Initially it has a clear background.
 		// Add as subview to card table.
 		if (_infoView == nil)
@@ -1695,24 +1684,21 @@ done:
 			_infoView = [[UIImageView alloc] initWithImage: [UIImage imageNamed: @"PaperTablet"]];
 			_infoView.userInteractionEnabled = YES;
 			frame = _infoView.frame;
-			if (portrait)
-				frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
-			else
-				frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width);
+			frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height);
 			_infoView.frame = frame;
 			[_darkView addSubview: _infoView];
 		}
-		
+
 		// Add "Game Over" view.
 		[_infoView addSubview: _gameOverView];
 		_currentInfoView = _gameOverView;
-		
+
 		// Update statistics.
 		[self updateLocalStatisticsInterface];
-		
+
 		// Capture touch events.
 		_darkView.userInteractionEnabled = YES;
-		
+
 		// Animate-in the view sliding in while the dark view becomes darker.
 		[UIView beginAnimations: @"SlideInInfoView" context: nil];
 		[UIView setAnimationDuration: 0.5];
@@ -1720,10 +1706,7 @@ done:
 		[UIView setAnimationDidStopSelector: @selector (animationStopped:finished:context:)];
 		_darkView.backgroundColor = [UIColor colorWithWhite: 0.0 alpha: 0.75];
 		frame = _infoView.frame;
-		if (portrait)
-			frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
-		else
-			frame.origin = CGPointMake ((mainBounds.size.height - frame.size.width) / 2.0, mainBounds.size.width - frame.size.height);
+		frame.origin = CGPointMake ((mainBounds.size.width - frame.size.width) / 2.0, mainBounds.size.height - frame.size.height);
 		_infoView.frame = frame;
 		[UIView commitAnimations];
 	}
@@ -1793,7 +1776,10 @@ done:
 	NSError			*error;
 	
 	// Store orientation.
-	_orientation = self.interfaceOrientation;
+	CGRect viewBounds = self.view.bounds;
+	_orientation = (viewBounds.size.width > viewBounds.size.height)
+		? UIInterfaceOrientationLandscapeRight
+		: UIInterfaceOrientationPortrait;
 	
 	// Get standard defaults, what is the user preference for auto-putaway.
 	defaults = [NSUserDefaults standardUserDefaults];
@@ -1829,6 +1815,7 @@ done:
 	// Assign portrait and landscape images.
 	[(CETableView *) self.view setPortraitImagePath: @"TablePortrait"];
 	[(CETableView *) self.view setLandscapeImagePath: @"TableLandscape"];
+	self.view.contentMode = UIViewContentModeRedraw;
 	
 	// Create 'Deal' image view.
 	_dealImageView = [[UIImageView alloc] initWithImage: [UIImage imageNamed: @"Deal.png"]];
@@ -1929,7 +1916,7 @@ done:
 	}
 	
 	// Layout the buttons.
-	mainBounds = [[UIScreen mainScreen] bounds];
+	mainBounds = self.view.bounds;
 	
 	// New button.
 	_newButton = [[UIButton alloc] initWithFrame: CGRectMake (kPNewButtonX, kPNewButtonY, kButtonWide, kButtonTall)];
@@ -2112,9 +2099,34 @@ skipAudio:
 #pragma mark ------ view controller methods
 // ------------------------------------------------------------- willRotateToInterfaceOrientation:toInterfaceOrientation
 
-- (void) willRotateToInterfaceOrientation: (UIInterfaceOrientation) orientation duration: (NSTimeInterval) duration
+- (void) viewWillTransitionToSize: (CGSize) size withTransitionCoordinator: (id<UIViewControllerTransitionCoordinator>) coordinator
 {
-	[self adjustLayoutForOrientation: orientation];
+	[super viewWillTransitionToSize: size withTransitionCoordinator: coordinator];
+
+	UIInterfaceOrientation newOrientation = (size.width > size.height)
+		? UIInterfaceOrientationLandscapeRight
+		: UIInterfaceOrientationPortrait;
+
+	[coordinator animateAlongsideTransition: ^(id<UIViewControllerTransitionCoordinatorContext> context) {
+		[self adjustLayoutForOrientation: newOrientation];
+	} completion: nil];
+}
+
+// ------------------------------------------------------------------------------------------------ viewDidLayoutSubviews
+
+- (void) viewDidLayoutSubviews
+{
+	[super viewDidLayoutSubviews];
+
+	if (!_initialLayoutApplied)
+	{
+		_initialLayoutApplied = YES;
+		CGRect bounds = self.view.bounds;
+		UIInterfaceOrientation orientation = (bounds.size.width > bounds.size.height)
+			? UIInterfaceOrientationLandscapeRight
+			: UIInterfaceOrientationPortrait;
+		[self adjustLayoutForOrientation: orientation];
+	}
 }
 
 /*
